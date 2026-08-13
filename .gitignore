@@ -1,0 +1,11 @@
+# Local metadata/CLI folders
+.remember/
+
+# System files
+Thumbs.db
+db.properties
+.DS_Store
+desktop.ini
+
+# Log files
+*.log
