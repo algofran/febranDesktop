@@ -14,7 +14,7 @@ $env:CGO_ENABLED = "0"
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 
-go build -ldflags="-s -w" -o "$TargetPath" ./cmd/gateway/main.go
+go build -ldflags="-s -w" -o "$TargetPath" ./cmd/gateway
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Sidecar binary built successfully: $BinaryName" -ForegroundColor Green

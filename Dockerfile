@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o gateway ./cmd/gateway/main.go
+RUN go build -o gateway ./cmd/gateway
 
 FROM alpine:3.20
 

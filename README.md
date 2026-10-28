@@ -94,7 +94,7 @@ The output `.msi` and `.exe` bundles will be created in `src-tauri/target/releas
 
 ```
 febranDesktop/
-├── cmd/gateway/main.go            # Pure-Go WA Gateway entrypoint
+├── cmd/gateway/                   # Pure-Go WA Gateway entrypoint (main.go + Windows service files)
 ├── pkg/whatsapp/
 │   ├── session.go                 # whatsmeow session manager & SQLite store
 │   └── types.go                   # Shared event types
