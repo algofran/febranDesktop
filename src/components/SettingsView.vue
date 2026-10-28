@@ -100,11 +100,14 @@
         </div>
       </div>
     </div>
+
+    <ServicePanel :dirty="dirty" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
+import ServicePanel from "./ServicePanel.vue";
 import type { GatewayConfig } from "../types";
 
 const props = defineProps<{
@@ -118,6 +121,7 @@ const emit = defineEmits<{
 
 const form = ref<GatewayConfig>({ ...props.config });
 const saving = ref(false);
+const dirty = computed(() => JSON.stringify(form.value) !== JSON.stringify(props.config));
 
 watch(
   () => props.config,
@@ -170,6 +174,10 @@ const save = () => {
   gap: 1.5rem;
   max-width: 960px;
   margin: 0 auto;
+}
+
+.settings-view > * + * {
+  margin-top: 1.5rem;
 }
 
 .settings-header {

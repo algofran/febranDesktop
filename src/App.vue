@@ -23,6 +23,7 @@
         @start-gateway="startGateway"
         @stop-gateway="stopGateway"
         @restart-gateway="restartGateway"
+        @open-settings="currentTab = 'settings'"
         @open-pairing="currentTab = 'sessions'"
         @open-test="currentTab = 'sandbox'"
         @refresh-sessions="fetchSessions"

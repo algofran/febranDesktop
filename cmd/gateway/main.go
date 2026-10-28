@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -20,21 +22,44 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// logOut is where request logs go: stdout on the console, a rotating file
+// when running as a Windows service (set by service_windows.go).
+var logOut io.Writer = os.Stdout
+
 func main() {
+	// `gateway service <install|uninstall|start|stop|restart|status>` manages the
+	// Windows service and exits; see service_windows.go.
+	if len(os.Args) > 1 && os.Args[1] == "service" {
+		os.Exit(runServiceCommand(os.Args[2:]))
+	}
+	if runningAsService() {
+		os.Exit(runAsService())
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := serve(ctx); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+// serve runs the gateway until ctx is cancelled, then shuts down gracefully.
+// It returns an error for startup failures (bad config, port in use).
+func serve(ctx context.Context) error {
 	_ = godotenv.Load()
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	if err := os.MkdirAll(cfg.SessionDir, 0755); err != nil {
-		log.Fatalf("Failed to create session directory: %v", err)
+		return fmt.Errorf("failed to create session directory: %w", err)
 	}
 
 	nodeID, err := config.LoadOrCreateNodeID(cfg.SessionDir)
 	if err != nil {
-		log.Fatalf("Failed to load/create node ID: %v", err)
+		return fmt.Errorf("failed to load/create node ID: %w", err)
 	}
 
 	// Initialize webhook client for central backend
@@ -47,7 +72,7 @@ func main() {
 	// executes commands routed to it (pair QR/code, send, groups).
 	wsClient := gateway.NewClient(cfg.CentralWSURL, cfg.GatewayServerKey, cfg.CentralAPIKey, nodeID, mgr)
 	if cfg.CentralWSURL != "" && cfg.GatewayServerKey != "" {
-		go wsClient.Run(context.Background())
+		go wsClient.Run(ctx)
 	} else {
 		log.Println("⚠️  CENTRAL_WS_URL / GATEWAY_SERVER_KEY not set — node will not register with backend")
 	}
@@ -79,6 +104,7 @@ func main() {
 	})
 	app.Use(recover.New())
 	app.Use(fiberLogger.New(fiberLogger.Config{
+		Output:     logOut,
 		Format:     "${time} | ${status} | ${latency} | ${method} | ${path}\n",
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
@@ -90,18 +116,20 @@ func main() {
 	// Register routes
 	router.Setup(app, gatewayHandler, authMiddleware)
 
-	// Start server in goroutine
+	// Start server in goroutine; a listen failure ends serve instead of the process.
+	listenErr := make(chan error, 1)
 	go func() {
 		log.Printf("🚀 WA Gateway starting on %s", cfg.GatewayBind)
 		if err := app.Listen(cfg.GatewayBind); err != nil {
-			log.Fatalf("Gateway server error: %v", err)
+			listenErr <- fmt.Errorf("gateway server error: %w", err)
 		}
 	}()
 
-	// Graceful shutdown
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
+	var serveErr error
+	select {
+	case <-ctx.Done():
+	case serveErr = <-listenErr:
+	}
 
 	log.Println("⏳ Shutting down gateway...")
 	if err := app.Shutdown(); err != nil {
@@ -109,4 +137,5 @@ func main() {
 	}
 	mgr.StopAll()
 	log.Println("✅ Shutdown complete.")
+	return serveErr
 }

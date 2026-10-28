@@ -47,7 +47,7 @@
       <button
         v-if="!status.running"
         class="btn-primary start-btn"
-        :disabled="loading"
+        :disabled="loading || svc.installed"
         @click="$emit('start-gateway')"
         title="Start Go WhatsApp Daemon"
       >
@@ -63,7 +63,7 @@
       <div v-else class="action-btn-group">
         <button
           class="icon-btn"
-          :disabled="loading"
+          :disabled="loading || svc.installed"
           @click="$emit('restart-gateway')"
           title="Restart Go Daemon"
         >
@@ -74,7 +74,7 @@
         </button>
         <button
           class="icon-btn stop-btn"
-          :disabled="loading"
+          :disabled="loading || svc.installed"
           @click="$emit('stop-gateway')"
           title="Stop Go Daemon"
         >
@@ -89,6 +89,9 @@
 
 <script setup lang="ts">
 import type { ProcessStatus } from "../types";
+import { useServiceState } from "../useServiceState";
+
+const { svc } = useServiceState();
 
 defineProps<{
   currentTab: string;

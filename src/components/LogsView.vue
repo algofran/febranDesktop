@@ -30,7 +30,7 @@
           </button>
 
           <!-- Clear -->
-          <button class="btn-secondary btn-sm" @click="$emit('clear-logs')">
+          <button class="btn-secondary btn-sm" @click="clearLogs">
             Clear
           </button>
 
@@ -40,6 +40,8 @@
           </button>
         </div>
       </div>
+
+      <div v-if="svc.installed" class="service-banner">Menampilkan log service Windows</div>
 
       <div ref="terminalBodyRef" class="terminal-body font-mono">
         <div v-if="filteredLogs.length === 0" class="empty-logs">
@@ -60,8 +62,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import type { LogMessage } from "../types";
+import { api } from "../api";
+import { useServiceState } from "../useServiceState";
+
+const { svc } = useServiceState();
+const serviceLogs = ref<LogMessage[]>([]);
+let serviceTimer: ReturnType<typeof setInterval> | null = null;
+
+const pollServiceLogs = async () => {
+  if (!svc.installed) return;
+  try {
+    const lines = await api.serviceLogTail(300);
+    serviceLogs.value = lines.map((message) => ({ level: "stdout", message, timestamp: "" }));
+  } catch {
+    // keep previous lines
+  }
+};
+
+onMounted(() => {
+  pollServiceLogs();
+  serviceTimer = setInterval(pollServiceLogs, 3000);
+});
+onUnmounted(() => {
+  if (serviceTimer) clearInterval(serviceTimer);
+});
+
+watch(() => svc.installed, (v) => { if (!v) serviceLogs.value = []; });
 
 const props = defineProps<{
   logs: LogMessage[];
@@ -76,14 +104,16 @@ const searchQuery = ref("");
 const autoScroll = ref(true);
 const terminalBodyRef = ref<HTMLElement | null>(null);
 
+const activeLogs = computed(() => (svc.installed ? serviceLogs.value : props.logs));
+
 const filteredLogs = computed(() => {
-  if (!searchQuery.value.trim()) return props.logs;
+  if (!searchQuery.value.trim()) return activeLogs.value;
   const q = searchQuery.value.toLowerCase();
-  return props.logs.filter((l) => l.message.toLowerCase().includes(q) || l.timestamp.includes(q));
+  return activeLogs.value.filter((l) => l.message.toLowerCase().includes(q) || l.timestamp.includes(q));
 });
 
 watch(
-  () => props.logs.length,
+  () => activeLogs.value.length,
   () => {
     if (autoScroll.value) {
       nextTick(() => {
@@ -95,8 +125,13 @@ watch(
   }
 );
 
+const clearLogs = () => {
+  if (svc.installed) serviceLogs.value = [];
+  else emit("clear-logs");
+};
+
 const copyLogs = () => {
-  const text = props.logs.map((l) => `[${l.timestamp}] [${l.level}] ${l.message}`).join("\n");
+  const text = activeLogs.value.map((l) => `[${l.timestamp}] [${l.level}] ${l.message}`).join("\n");
   navigator.clipboard.writeText(text);
   emit("toast", "Logs copied to clipboard", "success");
 };
@@ -213,5 +248,12 @@ const copyLogs = () => {
 
 .log-text {
   color: #e2e8f0;
+}
+.service-banner {
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.1);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
 }
 </style>

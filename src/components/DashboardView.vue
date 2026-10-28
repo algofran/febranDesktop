@@ -40,10 +40,14 @@
 
       <!-- Primary Action Buttons Box -->
       <div class="controller-actions">
+        <div v-if="svc.installed" class="service-note">
+          <span>Berjalan sebagai service Windows — kelola di Pengaturan › Mode Service</span>
+          <button class="btn-secondary btn-sm" @click="$emit('open-settings')">Buka Pengaturan</button>
+        </div>
         <button 
           v-if="!status.running" 
           class="btn-primary-large start-daemon-btn" 
-          :disabled="loading"
+          :disabled="loading || svc.installed"
           @click="$emit('start-gateway')"
         >
           <svg v-if="loading" class="spin-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -61,7 +65,7 @@
         <div v-else class="running-actions-box">
           <button 
             class="btn-secondary restart-daemon-btn" 
-            :disabled="loading" 
+            :disabled="loading || svc.installed" 
             @click="$emit('restart-gateway')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -73,7 +77,7 @@
 
           <button 
             class="btn-danger stop-daemon-btn" 
-            :disabled="loading" 
+            :disabled="loading || svc.installed" 
             @click="$emit('stop-gateway')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -298,7 +302,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { useServiceState } from "../useServiceState";
+
+const { svc, refreshServiceState } = useServiceState();
+onMounted(refreshServiceState);
 import type { ProcessStatus, GatewayConfig, SessionInfo } from "../types";
 
 const copiedKey = ref<string | null>(null);
@@ -322,6 +330,7 @@ defineEmits<{
   (e: "start-gateway"): void;
   (e: "stop-gateway"): void;
   (e: "restart-gateway"): void;
+  (e: "open-settings"): void;
   (e: "open-pairing"): void;
   (e: "open-test"): void;
   (e: "refresh-sessions"): void;
@@ -835,6 +844,19 @@ const truncateUrl = (url: string) => {
   text-align: right;
   word-break: break-all;
   max-width: 70%;
+}
+
+.service-note {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
 }
 
 .spin-icon {

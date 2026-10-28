@@ -78,3 +78,23 @@ export interface SendGroupMessagePayload {
   group_jid: string;
   text: string;
 }
+
+export type ServiceState =
+  | "running"
+  | "stopped"
+  | "start_pending"
+  | "stop_pending"
+  | "continue_pending"
+  | "pause_pending"
+  | "paused"
+  | "not_installed"
+  | "unknown";
+
+export interface ServiceInfo {
+  ok: boolean;
+  message: string;
+  installed: boolean;
+  state: ServiceState;
+  data_dir: string;
+  log_file: string;
+}

@@ -1,4 +1,4 @@
-import type { GatewayConfig, ProcessStatus, LogMessage, GroupInfo, ContactInfo, SessionInfo, SessionSyncData, AllSyncResult } from "./types";
+import type { GatewayConfig, ProcessStatus, LogMessage, GroupInfo, ContactInfo, SessionInfo, SessionSyncData, AllSyncResult, ServiceInfo } from "./types";
 
 declare global {
   interface Window {
@@ -188,6 +188,42 @@ export const api = {
     return await this.gatewayRequest("POST", `/api/v1/logout/${encodeURIComponent(numberId)}`, {
       keep_session: keepSession,
     });
+  },
+
+  // Windows service mode
+  async serviceStatus(): Promise<ServiceInfo> {
+    if (isTauri()) {
+      return await tauriInvoke<ServiceInfo>("service_status");
+    }
+    return { ok: true, message: "", installed: false, state: "not_installed", data_dir: "", log_file: "" };
+  },
+
+  async serviceInstall(): Promise<ServiceInfo> {
+    if (isTauri()) {
+      return await tauriInvoke<ServiceInfo>("service_install");
+    }
+    return { ok: true, message: "Mock: service terpasang", installed: true, state: "running", data_dir: "C:\ProgramData\Febran\Gateway\data", log_file: "C:\ProgramData\Febran\Gateway\gateway.log" };
+  },
+
+  async serviceUninstall(purge: boolean): Promise<ServiceInfo> {
+    if (isTauri()) {
+      return await tauriInvoke<ServiceInfo>("service_uninstall", { purge });
+    }
+    return { ok: true, message: "Mock: service dihapus", installed: false, state: "not_installed", data_dir: "", log_file: "" };
+  },
+
+  async serviceControl(action: "start" | "stop" | "restart"): Promise<ServiceInfo> {
+    if (isTauri()) {
+      return await tauriInvoke<ServiceInfo>("service_control", { action });
+    }
+    return { ok: true, message: "", installed: false, state: "not_installed", data_dir: "", log_file: "" };
+  },
+
+  async serviceLogTail(lines: number): Promise<string[]> {
+    if (isTauri()) {
+      return await tauriInvoke<string[]>("service_log_tail", { lines });
+    }
+    return [];
   },
 
   // Log Event Listener
