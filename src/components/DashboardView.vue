@@ -629,14 +629,20 @@ const truncateUrl = (url: string) => {
 
 .section-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.6rem 1rem;
 }
 
 .section-title-box {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+}
+
+.section-title-box .badge {
+  flex-shrink: 0;
 }
 
 .section-title {
@@ -647,13 +653,20 @@ const truncateUrl = (url: string) => {
 
 .section-header-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  margin-left: auto;
 }
 
 .btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.3rem 0.65rem;
   font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -684,24 +697,38 @@ const truncateUrl = (url: string) => {
 }
 
 .device-row {
-  display: flex;
+  /* info and status on the first line, actions on their own line below */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'info status' 'actions actions';
   align-items: center;
-  justify-content: space-between;
-  padding: 0.65rem 0.85rem;
+  gap: 0.7rem 0.85rem;
+  padding: 0.8rem 0.9rem;
   background: var(--bg-input);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
 }
 
 .device-info {
+  grid-area: info;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+}
+
+.device-info > div:last-child {
+  min-width: 0;
+}
+
+.device-status {
+  grid-area: status;
 }
 
 .device-avatar {
-  width: 32px;
-  height: 32px;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   background: rgba(16, 185, 129, 0.1);
   display: flex;
@@ -722,18 +749,21 @@ const truncateUrl = (url: string) => {
 
 .pairing-key-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem 0.4rem;
   margin-top: 0.4rem;
 }
 
 .pairing-key-label {
+  white-space: nowrap;
   font-size: 0.68rem;
   color: var(--text-muted);
 }
 
 .pairing-key-code {
   font-family: var(--font-mono);
+  white-space: nowrap;
   font-size: 0.7rem;
   font-weight: 700;
   color: #60a5fa;
@@ -766,9 +796,14 @@ const truncateUrl = (url: string) => {
 }
 
 .device-actions {
+  grid-area: actions;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* Architecture Flow */

@@ -177,6 +177,7 @@ input::placeholder, textarea::placeholder {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .badge-success {
