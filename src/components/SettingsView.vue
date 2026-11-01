@@ -53,9 +53,23 @@
           </div>
         </div>
 
-        <!-- This node's identity; the central server itself is fixed and not shown -->
+        <!-- Central Webhook Section -->
         <div class="section-group">
-          <h3 class="group-title">{{ t('settings.nodeTitle') }}</h3>
+          <h3 class="group-title">{{ t('settings.centralTitle') }}</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ t('settings.webhookUrlLabel') }} (CENTRAL_WEBHOOK_URL)</label>
+              <input v-model="form.central_webhook_url" type="text" class="font-mono" />
+              <span class="form-hint">{{ t('settings.webhookUrlHint') }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ t('settings.wsUrlLabel') }} (CENTRAL_WS_URL)</label>
+              <input v-model="form.central_ws_url" type="text" class="font-mono" />
+              <span class="form-hint">{{ t('settings.wsUrlHint') }}</span>
+            </div>
+          </div>
 
           <div class="form-row">
             <div class="form-group">
@@ -65,6 +79,12 @@
                 <button class="btn-secondary btn-sm" @click="generateServerKey">{{ t('settings.generate') }}</button>
               </div>
               <span class="form-hint">{{ t('settings.serverKeyHintBefore') }} <code>server_key</code> {{ t('settings.serverKeyHintAfter') }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ t('settings.centralKeyLabel') }} (CENTRAL_API_KEY)</label>
+              <input v-model="form.central_api_key" type="text" class="font-mono" />
+              <span class="form-hint">{{ t('settings.centralKeyHint') }}</span>
             </div>
           </div>
         </div>

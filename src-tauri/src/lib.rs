@@ -24,29 +24,14 @@ pub struct GatewayConfig {
     pub log_level: String,
 }
 
-/// The central server every installed node talks to. Users do not choose it: the panel hides these
-/// fields and the saved .env cannot override them. The API key is not in the source; it is baked in
-/// at build time (see build.rs) from FEBRAN_CENTRAL_API_KEY or src-tauri/central-key.txt.
+/// Defaults for a fresh install: the central server and, when the build carries one, its API key
+/// (baked in at build time, see build.rs: FEBRAN_CENTRAL_API_KEY or src-tauri/central-key.txt).
+/// All of them stay editable in Settings and in .env.
 const CENTRAL_WEBHOOK_URL: &str = "https://febran.com/api/v1/webhooks/gateway";
 const CENTRAL_WS_URL: &str = "wss://febran.com/ws/gateway";
 const BAKED_CENTRAL_API_KEY: Option<&str> = option_env!("FEBRAN_CENTRAL_API_KEY");
 /// Used only when the build carries no key: development, where the key comes from .env instead.
 const DEV_CENTRAL_API_KEY: &str = "dev-central-key-2024";
-
-/// Developers pointing a build at a local backend can set FEBRAN_CENTRAL_OVERRIDE=1 and use .env.
-fn central_override() -> bool {
-    std::env::var("FEBRAN_CENTRAL_OVERRIDE").map(|v| v == "1").unwrap_or(false)
-}
-
-/// Pins the central server. The key is pinned only when this build has one baked in; a build
-/// without it keeps whatever .env says, so a development setup is not cut off from its backend.
-fn lock_central(config: &mut GatewayConfig) {
-    config.central_webhook_url = CENTRAL_WEBHOOK_URL.to_string();
-    config.central_ws_url = CENTRAL_WS_URL.to_string();
-    if let Some(k) = BAKED_CENTRAL_API_KEY {
-        config.central_api_key = k.to_string();
-    }
-}
 
 impl Default for GatewayConfig {
     fn default() -> Self {
@@ -110,9 +95,6 @@ fn load_env_config() -> GatewayConfig {
                 }
             }
         }
-    }
-    if !central_override() {
-        lock_central(&mut config);
     }
     config
 }
@@ -440,17 +422,11 @@ fn get_config(state: State<AppState>) -> GatewayConfig {
     let cfg = load_env_config();
     let mut current_cfg = state.config.lock().unwrap();
     *current_cfg = cfg.clone();
-    // the panel never needs the central key; do not hand it to the webview
-    GatewayConfig { central_api_key: String::new(), ..cfg }
+    cfg
 }
 
 #[tauri::command]
-fn save_config(mut config: GatewayConfig, state: State<AppState>) -> Result<bool, String> {
-    if !central_override() {
-        // The panel never sees the key, so it sends it blank: keep the one already in use.
-        config.central_api_key = load_env_config().central_api_key;
-        lock_central(&mut config); // whatever the panel sent, the central server is fixed
-    }
+fn save_config(config: GatewayConfig, state: State<AppState>) -> Result<bool, String> {
     save_env_config(&config)?;
     let mut current_cfg = state.config.lock().unwrap();
     *current_cfg = config;
@@ -779,18 +755,11 @@ mod tests {
     }
 
     #[test]
-    fn central_server_cannot_be_overridden_from_the_panel() {
-        let mut cfg = GatewayConfig::default();
-        cfg.central_webhook_url = "http://evil.example/hook".into();
-        cfg.central_ws_url = "ws://evil.example/ws".into();
-        cfg.central_api_key = "stolen".into();
-        lock_central(&mut cfg);
+    fn defaults_point_at_the_central_server() {
+        let cfg = GatewayConfig::default();
         assert_eq!(cfg.central_webhook_url, CENTRAL_WEBHOOK_URL);
         assert_eq!(cfg.central_ws_url, CENTRAL_WS_URL);
-        match BAKED_CENTRAL_API_KEY {
-            Some(k) => assert_eq!(cfg.central_api_key, k),
-            None => assert_eq!(cfg.central_api_key, "stolen"), // dev build: .env keeps its key
-        }
+        assert_eq!(cfg.central_api_key, BAKED_CENTRAL_API_KEY.unwrap_or(DEV_CENTRAL_API_KEY));
     }
 
     #[test]
