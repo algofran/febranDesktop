@@ -2,8 +2,8 @@
   <div class="glass-panel service-card">
     <div class="svc-header">
       <div>
-        <h2 class="svc-title">Mode Service</h2>
-        <p class="svc-subtitle">Jalankan gateway sebagai service Windows</p>
+        <h2 class="svc-title">{{ t('service.title') }}</h2>
+        <p class="svc-subtitle">{{ t('service.subtitle') }}</p>
       </div>
       <span :class="['svc-badge', badge.cls]">{{ badge.text }}</span>
     </div>
@@ -12,26 +12,26 @@
       <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
       </svg>
-      <span>Menunggu izin Administrator (UAC)… cek jendela yang mungkin muncul di belakang aplikasi.</span>
+      <span>{{ t('service.waitingUac') }}</span>
     </div>
 
     <div v-if="notice" :class="['svc-notice', notice.type]">
       <span>{{ notice.text }}</span>
-      <button class="svc-dismiss" title="Tutup" @click="notice = null">×</button>
+      <button class="svc-dismiss" :title="t('service.close')" @click="notice = null">×</button>
     </div>
 
     <!-- Not installed -->
     <template v-if="!info.installed">
       <p class="svc-text">
-        Gateway tetap berjalan di latar belakang walau aplikasi ditutup dan menyala otomatis saat Windows start.
-        Akan meminta izin Administrator (satu kali). Sesi WhatsApp disalin ke service, dan gateway milik aplikasi dihentikan.
+        {{ t('service.intro1') }}
+        {{ t('service.intro2') }}
       </p>
       <p class="svc-warn">
-        {{ dirty ? 'Ada perubahan yang belum disimpan — simpan konfigurasi dulu.' : 'Service memakai konfigurasi yang sudah tersimpan, pastikan pengaturan sudah disimpan.' }}
+        {{ dirty ? t('service.dirtyInstall') : t('service.savedConfigNote') }}
       </p>
       <div class="svc-actions">
         <button class="btn-primary" :disabled="busy || dirty" @click="run(() => api.serviceInstall())">
-          Jalankan sebagai Service
+          {{ t('service.install') }}
         </button>
       </div>
     </template>
@@ -39,44 +39,44 @@
     <!-- Installed -->
     <template v-else>
       <div class="svc-actions">
-        <button v-if="info.state === 'stopped'" class="btn-primary" :disabled="busy" @click="run(() => api.serviceControl('start'))">Mulai</button>
-        <button v-if="info.state === 'running'" class="btn-secondary" :disabled="busy" @click="run(() => api.serviceControl('stop'))">Hentikan</button>
-        <button class="btn-secondary" :disabled="busy" @click="run(() => api.serviceControl('restart'))">Restart</button>
-        <button class="btn-secondary" :disabled="busy || dirty" @click="run(() => api.serviceInstall())">Terapkan Konfigurasi</button>
-        <button class="btn-danger" :disabled="busy" @click="confirmOpen = true">Hapus Service</button>
+        <button v-if="info.state === 'stopped'" class="btn-primary" :disabled="busy" @click="run(() => api.serviceControl('start'))">{{ t('service.start') }}</button>
+        <button v-if="info.state === 'running'" class="btn-secondary" :disabled="busy" @click="run(() => api.serviceControl('stop'))">{{ t('service.stop') }}</button>
+        <button class="btn-secondary" :disabled="busy" @click="run(() => api.serviceControl('restart'))">{{ t('service.restart') }}</button>
+        <button class="btn-secondary" :disabled="busy || dirty" @click="run(() => api.serviceInstall())">{{ t('service.applyConfig') }}</button>
+        <button class="btn-danger" :disabled="busy" @click="confirmOpen = true">{{ t('service.uninstall') }}</button>
       </div>
-      <p class="svc-hint">Service memakai salinan konfigurasi sendiri. Setelah mengubah pengaturan, klik ini agar berlaku.</p>
-      <p v-if="dirty" class="svc-warn">Ada perubahan yang belum disimpan — simpan konfigurasi dulu sebelum menerapkan.</p>
+      <p class="svc-hint">{{ t('service.applyHint') }}</p>
+      <p v-if="dirty" class="svc-warn">{{ t('service.dirtyApply') }}</p>
     </template>
 
     <div v-if="info.data_dir || info.log_file" class="svc-paths">
       <div v-if="info.data_dir" class="svc-path">
-        <span class="svc-path-label">Data:</span>
+        <span class="svc-path-label">{{ t('service.data') }}</span>
         <code class="font-mono">{{ info.data_dir }}</code>
-        <button class="btn-secondary btn-sm" @click="copy(info.data_dir)">Salin</button>
+        <button class="btn-secondary btn-sm" @click="copy(info.data_dir)">{{ t('service.copy') }}</button>
       </div>
       <div v-if="info.log_file" class="svc-path">
-        <span class="svc-path-label">Log:</span>
+        <span class="svc-path-label">{{ t('service.log') }}</span>
         <code class="font-mono">{{ info.log_file }}</code>
-        <button class="btn-secondary btn-sm" @click="copy(info.log_file)">Salin</button>
+        <button class="btn-secondary btn-sm" @click="copy(info.log_file)">{{ t('service.copy') }}</button>
       </div>
     </div>
 
     <!-- Confirm dialog -->
     <div v-if="confirmOpen" class="svc-overlay" @click.self="confirmOpen = false">
       <div class="glass-panel svc-dialog">
-        <h3 class="svc-title">Hapus Service?</h3>
+        <h3 class="svc-title">{{ t('service.confirmTitle') }}</h3>
         <p class="svc-text">
-          Service akan dihapus. Sesi WhatsApp terbaru disalin kembali ke aplikasi, jadi login tetap valid
-          kecuali data service ikut dihapus.
+          {{ t('service.confirmText') }}
+
         </p>
         <label class="svc-check">
           <input v-model="purge" type="checkbox" />
-          <span>Hapus juga data service (sesi WhatsApp di service ikut terhapus)</span>
+          <span>{{ t('service.purge') }}</span>
         </label>
         <div class="svc-actions">
-          <button class="btn-secondary" @click="confirmOpen = false">Batal</button>
-          <button class="btn-danger" @click="doUninstall">Hapus Service</button>
+          <button class="btn-secondary" @click="confirmOpen = false">{{ t('service.cancel') }}</button>
+          <button class="btn-danger" @click="doUninstall">{{ t('service.uninstall') }}</button>
         </div>
       </div>
     </div>
@@ -88,6 +88,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { api } from "../api";
 import type { ServiceInfo } from "../types";
 import { useServiceState } from "../useServiceState";
+import { t } from "../i18n";
 
 defineProps<{ dirty?: boolean }>();
 
@@ -146,15 +147,15 @@ const copy = async (text: string) => {
 
 const badge = computed(() => {
   switch (info.value.state) {
-    case "running": return { text: "Berjalan", cls: "ok" };
+    case "running": return { text: t('service.state.running'), cls: "ok" };
     case "stopped":
-    case "paused": return { text: "Berhenti", cls: "off" };
+    case "paused": return { text: t('service.state.stopped'), cls: "off" };
     case "start_pending":
-    case "continue_pending": return { text: "Memulai…", cls: "wait" };
+    case "continue_pending": return { text: t('service.state.starting'), cls: "wait" };
     case "stop_pending":
-    case "pause_pending": return { text: "Menghentikan…", cls: "wait" };
-    case "not_installed": return { text: "Belum terpasang", cls: "none" };
-    default: return { text: "Tidak diketahui", cls: "none" };
+    case "pause_pending": return { text: t('service.state.stopping'), cls: "wait" };
+    case "not_installed": return { text: t('service.state.notInstalled'), cls: "none" };
+    default: return { text: t('service.state.unknown'), cls: "none" };
   }
 });
 

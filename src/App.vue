@@ -80,6 +80,7 @@ import MessageSandbox from "./components/MessageSandbox.vue";
 import LogsView from "./components/LogsView.vue";
 import SettingsView from "./components/SettingsView.vue";
 import { api } from "./api";
+import { t } from "./i18n";
 import type { ProcessStatus, GatewayConfig, SessionInfo, LogMessage } from "./types";
 
 const currentTab = ref("dashboard");
@@ -96,10 +97,10 @@ const status = ref<ProcessStatus>({
 const config = ref<GatewayConfig>({
   gateway_bind: "127.0.0.1:8989",
   gateway_api_key: "dev-gateway-key-2024",
-  central_webhook_url: "http://localhost:8080/api/v1/webhooks/gateway",
-  central_ws_url: "ws://localhost:8080/ws/gateway",
+  central_webhook_url: "https://febran.com/api/v1/webhooks/gateway",
+  central_ws_url: "wss://febran.com/ws/gateway",
   gateway_server_key: "node-1",
-  central_api_key: "dev-central-key-2024",
+  central_api_key: "",
   session_dir: "./sessions",
   log_level: "info",
 });
@@ -140,11 +141,11 @@ const startGateway = async () => {
   try {
     const res = await api.startGateway();
     status.value = res;
-    showToast("Gateway process started successfully", "success");
+    showToast(t('app.toast.started'), "success");
     addLog("info", `Gateway daemon started on ${res.bind}`);
     setTimeout(fetchSessions, 1000);
   } catch (err: unknown) {
-    showToast(`Failed to start gateway: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.startFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
     addLog("error", `Start error: ${err}`);
   } finally {
     loading.value = false;
@@ -162,10 +163,10 @@ const stopGateway = async () => {
       is_healthy: false,
       ws_connected: false,
     };
-    showToast("Gateway process stopped", "success");
+    showToast(t('app.toast.stopped'), "success");
     addLog("warn", "Gateway daemon stopped by user");
   } catch (err: unknown) {
-    showToast(`Failed to stop: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.stopFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
   } finally {
     loading.value = false;
   }
@@ -173,7 +174,7 @@ const stopGateway = async () => {
 
 const restartGateway = async () => {
   loading.value = true;
-  showToast("Restarting Go daemon...", "success");
+  showToast(t('app.toast.restarting'), "success");
   addLog("info", "Restarting Go daemon...");
   try {
     await api.stopGateway();
@@ -181,17 +182,17 @@ const restartGateway = async () => {
       try {
         const res = await api.startGateway();
         status.value = res;
-        showToast("Gateway restarted successfully", "success");
+        showToast(t('app.toast.restarted'), "success");
         addLog("info", `Gateway daemon started on ${res.bind}`);
         setTimeout(fetchSessions, 1000);
       } catch (err) {
-        showToast(`Failed to start: ${err instanceof Error ? err.message : String(err)}`, "error");
+        showToast(t('app.toast.restartStartFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
       } finally {
         loading.value = false;
       }
     }, 600);
   } catch (err) {
-    showToast(`Restart error: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.restartError', { err: err instanceof Error ? err.message : String(err) }), "error");
     loading.value = false;
   }
 };
@@ -222,35 +223,35 @@ const openPairWithNumber = (numberId: string) => {
 const handleLogout = async (numberId: string) => {
   try {
     await api.logout(numberId, false);
-    showToast(`Logged out session for ${numberId}`);
+    showToast(t('app.toast.loggedOut', { id: numberId }));
     fetchSessions();
   } catch (err: unknown) {
-    showToast(`Error: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.error', { err: err instanceof Error ? err.message : String(err) }), "error");
   }
 };
 
 const handleSyncAll = async () => {
   try {
-    showToast("Menarik & menyinkronkan semua data kontak dan grup...", "success");
+    showToast(t('app.toast.syncAllStart'), "success");
     const res = await api.syncAll();
-    showToast(`Berhasil sinkronkan ${res.data.total_contacts} kontak dan ${res.data.total_groups} grup dari ${res.data.total_sessions} nomor`, "success");
+    showToast(t('app.toast.syncAllDone', { contacts: res.data.total_contacts, groups: res.data.total_groups, sessions: res.data.total_sessions }), "success");
     addLog("info", `[SyncAll] Berhasil sinkronkan ${res.data.total_contacts} kontak dan ${res.data.total_groups} grup dari ${res.data.total_sessions} nomor terhubung`);
     fetchSessions();
   } catch (err: unknown) {
-    showToast(`Sinkronisasi gagal: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.syncFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
     addLog("error", `[SyncAll] Gagal: ${err}`);
   }
 };
 
 const handleSyncDevice = async (numberId: string) => {
   try {
-    showToast(`Menyinkronkan kontak dan grup untuk ${numberId}...`, "success");
+    showToast(t('app.toast.syncDeviceStart', { id: numberId }), "success");
     const res = await api.syncDevice(numberId);
-    showToast(`Berhasil sinkronkan ${res.data.contacts.length} kontak & ${res.data.groups.length} grup untuk ${numberId}`, "success");
+    showToast(t('app.toast.syncDeviceDone', { contacts: res.data.contacts.length, groups: res.data.groups.length, id: numberId }), "success");
     addLog("info", `[SyncDevice] Berhasil sinkronkan ${res.data.contacts.length} kontak dan ${res.data.groups.length} grup untuk ${numberId}`);
     fetchSessions();
   } catch (err: unknown) {
-    showToast(`Sinkronisasi gagal: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.syncFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
     addLog("error", `[SyncDevice] Gagal untuk ${numberId}: ${err}`);
   }
 };
@@ -259,14 +260,14 @@ const saveConfig = async (newCfg: GatewayConfig) => {
   try {
     await api.saveConfig(newCfg);
     config.value = newCfg;
-    showToast("Configuration saved successfully", "success");
+    showToast(t('app.toast.configSaved'), "success");
     addLog("info", "Configuration saved. Restarting daemon to apply changes...");
     if (status.value.running) {
       await stopGateway();
       setTimeout(startGateway, 500);
     }
   } catch (err: unknown) {
-    showToast(`Failed to save config: ${err instanceof Error ? err.message : String(err)}`, "error");
+    showToast(t('app.toast.configSaveFailed', { err: err instanceof Error ? err.message : String(err) }), "error");
   }
 };
 

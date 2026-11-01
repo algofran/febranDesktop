@@ -5,8 +5,8 @@
       <div class="glass-panel composer-card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Message Dispatch Sandbox</h2>
-            <p class="card-subtitle">Test sending direct messages or group chats through local WhatsApp sessions</p>
+            <h2 class="card-title">{{ t('sandbox.title') }}</h2>
+            <p class="card-subtitle">{{ t('sandbox.subtitle') }}</p>
           </div>
           <div class="badge badge-success">POST /api/v1/send</div>
         </div>
@@ -14,56 +14,56 @@
         <div class="form-grid">
           <!-- Dispatch Mode -->
           <div class="form-group">
-            <label class="form-label">Message Target Mode</label>
+            <label class="form-label">{{ t('sandbox.targetMode') }}</label>
             <div class="mode-toggles">
               <button 
                 :class="['toggle-btn', { active: mode === 'direct' }]" 
                 @click="mode = 'direct'"
               >
-                Direct User (Phone)
+                {{ t('sandbox.modeDirect') }}
               </button>
               <button 
                 :class="['toggle-btn', { active: mode === 'group' }]" 
                 @click="mode = 'group'"
               >
-                WhatsApp Group
+                {{ t('sandbox.modeGroup') }}
               </button>
             </div>
           </div>
 
           <!-- Sender Phone -->
           <div class="form-group">
-            <label class="form-label">Sender Device (Session)</label>
+            <label class="form-label">{{ t('sandbox.senderLabel') }}</label>
             <select v-model="selectedNumberId" class="font-mono">
-              <option value="" disabled>Select a connected WhatsApp number</option>
+              <option value="" disabled>{{ t('sandbox.selectNumber') }}</option>
               <option v-for="s in connectedSessions" :key="s.number_id" :value="s.number_id">
-                {{ s.number_id }} (Connected)
+                {{ t('sandbox.connectedSuffix', { id: s.number_id }) }}
               </option>
             </select>
             <div v-if="connectedSessions.length === 0" class="input-hint text-warning">
-              No connected session available. Please pair a number first.
+              {{ t('sandbox.noSession') }}
             </div>
           </div>
 
           <!-- Recipient -->
           <div class="form-group">
             <label class="form-label">
-              {{ mode === 'direct' ? 'Recipient Phone Number' : 'Target Group JID' }}
+              {{ mode === 'direct' ? t('sandbox.recipientPhone') : t('sandbox.recipientGroup') }}
             </label>
             <input 
               v-model="recipient" 
               type="text" 
-              :placeholder="mode === 'direct' ? 'e.g. 6281234567890' : 'e.g. 120363041234567890@g.us'" 
+              :placeholder="mode === 'direct' ? t('sandbox.phonePlaceholder') : t('sandbox.groupPlaceholder')" 
               class="font-mono"
             />
             <div class="input-hint">
-              {{ mode === 'direct' ? 'Include country code without + (e.g. 628...)' : 'Group JID format: ID@g.us' }}
+              {{ mode === 'direct' ? t('sandbox.phoneHint') : t('sandbox.groupHint') }}
             </div>
           </div>
 
           <!-- Quick Templates -->
           <div class="form-group">
-            <label class="form-label">Quick Templates</label>
+            <label class="form-label">{{ t('sandbox.quickTemplates') }}</label>
             <div class="template-chips">
               <button 
                 v-for="tpl in templates" 
@@ -78,11 +78,11 @@
 
           <!-- Message Text -->
           <div class="form-group">
-            <label class="form-label">Message Content</label>
+            <label class="form-label">{{ t('sandbox.messageContent') }}</label>
             <textarea 
               v-model="messageText" 
               rows="4" 
-              placeholder="Type your WhatsApp message here..."
+              :placeholder="t('sandbox.messagePlaceholder')"
             ></textarea>
           </div>
 
@@ -97,7 +97,7 @@
                 <line x1="22" y1="2" x2="11" y2="13"/>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>
-              <span>{{ sending ? 'Sending Message...' : 'Send WhatsApp Message' }}</span>
+              <span>{{ sending ? t('sandbox.sending') : t('sandbox.send') }}</span>
             </button>
           </div>
         </div>
@@ -107,17 +107,17 @@
       <div class="glass-panel receipts-card">
         <div class="card-header">
           <div>
-            <h3 class="card-title">Dispatch Receipts</h3>
-            <p class="card-subtitle">Real-time outcome of messages dispatched in this session</p>
+            <h3 class="card-title">{{ t('sandbox.receiptsTitle') }}</h3>
+            <p class="card-subtitle">{{ t('sandbox.receiptsSubtitle') }}</p>
           </div>
           <button v-if="receipts.length > 0" class="btn-secondary btn-sm" @click="receipts = []">
-            Clear
+            {{ t('sandbox.clear') }}
           </button>
         </div>
 
         <div v-if="receipts.length === 0" class="empty-receipts">
           <div class="empty-icon">📨</div>
-          <div class="empty-text">No messages dispatched yet in this session.</div>
+          <div class="empty-text">{{ t('sandbox.noReceipts') }}</div>
         </div>
 
         <div v-else class="receipts-list">
@@ -128,15 +128,15 @@
           >
             <div class="receipt-top">
               <span :class="['badge', r.success ? 'badge-success' : 'badge-danger']">
-                {{ r.success ? 'DISPATCHED' : 'FAILED' }}
+                {{ r.success ? t('sandbox.dispatched') : t('sandbox.failed') }}
               </span>
               <span class="receipt-time font-mono">{{ r.time }}</span>
             </div>
             <div class="receipt-target font-mono">
-              To: <strong>{{ r.to }}</strong> (via {{ r.sender }})
+              {{ t('sandbox.to') }} <strong>{{ r.to }}</strong> {{ t('sandbox.via', { sender: r.sender }) }}
             </div>
             <div class="receipt-body font-mono">{{ r.text }}</div>
-            <div v-if="r.error" class="receipt-error font-mono">Error: {{ r.error }}</div>
+            <div v-if="r.error" class="receipt-error font-mono">{{ t('sandbox.errorLabel') }} {{ r.error }}</div>
           </div>
         </div>
       </div>
@@ -147,6 +147,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { api } from "../api";
+import { t } from "../i18n";
 import type { SessionInfo } from "../types";
 
 const props = defineProps<{
@@ -186,11 +187,11 @@ const canSend = computed(() => {
   );
 });
 
-const templates = [
-  { label: "OTP Verification", text: "Your Febran verification code is: *839120*. Do not share this code with anyone." },
-  { label: "Welcome Greeting", text: "Hello! Thank you for contacting our customer service. How can we help you today?" },
-  { label: "Order Confirmed", text: "📦 Your order #FBR-9841 has been confirmed and is being prepared for shipment!" },
-];
+const templates = computed(() => [
+  { label: t('sandbox.tplOtpLabel'), text: t('sandbox.tplOtpText') },
+  { label: t('sandbox.tplWelcomeLabel'), text: t('sandbox.tplWelcomeText') },
+  { label: t('sandbox.tplOrderLabel'), text: t('sandbox.tplOrderText') },
+]);
 
 const applyTemplate = (text: string) => {
   messageText.value = text;
@@ -219,7 +220,7 @@ const sendMessage = async () => {
       text,
       success: true,
     });
-    emit("toast", "Message sent successfully!", "success");
+    emit("toast", t('sandbox.toastSent'), "success");
     messageText.value = "";
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
@@ -231,7 +232,7 @@ const sendMessage = async () => {
       success: false,
       error: errorMsg,
     });
-    emit("toast", `Failed to send: ${errorMsg}`, "error");
+    emit("toast", t('sandbox.toastFailed', { error: errorMsg }), "error");
   } finally {
     sending.value = false;
   }

@@ -8,8 +8,8 @@
             <span class="dot yellow"></span>
             <span class="dot green"></span>
           </div>
-          <span class="terminal-title">Daemon Live Console Output</span>
-          <span class="badge badge-neutral font-mono">{{ filteredLogs.length }} lines</span>
+          <span class="terminal-title">{{ t('logs.title') }}</span>
+          <span class="badge badge-neutral font-mono">{{ t('logs.lines', { n: filteredLogs.length }) }}</span>
         </div>
 
         <div class="terminal-controls">
@@ -17,7 +17,7 @@
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Filter logs..." 
+            :placeholder="t('logs.filterPlaceholder')" 
             class="filter-input font-mono"
           />
 
@@ -26,26 +26,26 @@
             :class="['btn-secondary btn-sm', { active: autoScroll }]" 
             @click="autoScroll = !autoScroll"
           >
-            Auto-Scroll: {{ autoScroll ? 'ON' : 'OFF' }}
+            {{ t('logs.autoScroll', { state: autoScroll ? t('logs.on') : t('logs.off') }) }}
           </button>
 
           <!-- Clear -->
           <button class="btn-secondary btn-sm" @click="clearLogs">
-            Clear
+            {{ t('logs.clear') }}
           </button>
 
           <!-- Copy -->
           <button class="btn-secondary btn-sm" @click="copyLogs">
-            Copy
+            {{ t('logs.copy') }}
           </button>
         </div>
       </div>
 
-      <div v-if="svc.installed" class="service-banner">Menampilkan log service Windows</div>
+      <div v-if="svc.installed" class="service-banner">{{ t('logs.serviceBanner') }}</div>
 
       <div ref="terminalBodyRef" class="terminal-body font-mono">
         <div v-if="filteredLogs.length === 0" class="empty-logs">
-          <span>Waiting for gateway logs...</span>
+          <span>{{ t('logs.waiting') }}</span>
         </div>
         <div 
           v-for="(l, idx) in filteredLogs" 
@@ -65,6 +65,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import type { LogMessage } from "../types";
 import { api } from "../api";
+import { t } from "../i18n";
 import { useServiceState } from "../useServiceState";
 
 const { svc } = useServiceState();
@@ -133,7 +134,7 @@ const clearLogs = () => {
 const copyLogs = () => {
   const text = activeLogs.value.map((l) => `[${l.timestamp}] [${l.level}] ${l.message}`).join("\n");
   navigator.clipboard.writeText(text);
-  emit("toast", "Logs copied to clipboard", "success");
+  emit("toast", t('logs.toastCopied'), "success");
 };
 </script>
 

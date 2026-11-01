@@ -3,8 +3,8 @@
     <div class="glass-panel settings-card">
       <div class="settings-header">
         <div>
-          <h2 class="settings-title">Node Configuration</h2>
-          <p class="settings-subtitle">Manage environment parameters and transport security for this daemon</p>
+          <h2 class="settings-title">{{ t('settings.title') }}</h2>
+          <p class="settings-subtitle">{{ t('settings.subtitle') }}</p>
         </div>
         <button class="btn-primary" :disabled="saving" @click="save">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -12,89 +12,83 @@
             <polyline points="17 21 17 13 7 13 7 21"/>
             <polyline points="7 3 7 8 15 8"/>
           </svg>
-          <span>{{ saving ? 'Saving...' : 'Save & Apply Config' }}</span>
+          <span>{{ saving ? t('settings.saving') : t('settings.save') }}</span>
         </button>
       </div>
 
       <div class="settings-grid">
-        <!-- Gateway Section -->
+        <!-- Language -->
         <div class="section-group">
-          <h3 class="group-title">Gateway Transport Parameters</h3>
-
+          <h3 class="group-title">{{ t('settings.languageTitle') }}</h3>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Gateway Bind Address (GATEWAY_BIND)</label>
-              <input v-model="form.gateway_bind" type="text" class="font-mono" />
-              <span class="form-hint">Address and port the gateway HTTP server listens on (e.g. 127.0.0.1:8989 or 0.0.0.0:8989).</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Gateway Security Key (GATEWAY_API_KEY)</label>
-              <div class="input-with-action">
-                <input v-model="form.gateway_api_key" type="text" class="font-mono" />
-                <button class="btn-secondary btn-sm" @click="generateKey">Generate</button>
-              </div>
-              <span class="form-hint">Required in the <code>X-Gateway-Key</code> request header when accessing this node.</span>
+              <label class="form-label">{{ t('settings.language') }}</label>
+              <select :value="locale" @change="setLocale(($event.target as HTMLSelectElement).value as Locale)">
+                <option v-for="l in locales" :key="l.code" :value="l.code">{{ l.label }}</option>
+              </select>
+              <span class="form-hint">{{ t('settings.languageHint') }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Central Webhook Section -->
+        <!-- Gateway Section -->
         <div class="section-group">
-          <h3 class="group-title">Central Backend Connection</h3>
+          <h3 class="group-title">{{ t('settings.gatewayTitle') }}</h3>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Central Webhook URL (CENTRAL_WEBHOOK_URL)</label>
-              <input v-model="form.central_webhook_url" type="text" class="font-mono" />
-              <span class="form-hint">Destination endpoint where inbound messages and status changes are posted.</span>
+              <label class="form-label">{{ t('settings.bindLabel') }} (GATEWAY_BIND)</label>
+              <input v-model="form.gateway_bind" type="text" class="font-mono" />
+              <span class="form-hint">{{ t('settings.bindHint') }}</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Central WebSocket URL (CENTRAL_WS_URL)</label>
-              <input v-model="form.central_ws_url" type="text" class="font-mono" />
-              <span class="form-hint">WebSocket address of the tenant backend this node registers to (e.g. ws://localhost:8080/ws/gateway).</span>
+              <label class="form-label">{{ t('settings.apiKeyLabel') }} (GATEWAY_API_KEY)</label>
+              <div class="input-with-action">
+                <input v-model="form.gateway_api_key" type="text" class="font-mono" />
+                <button class="btn-secondary btn-sm" @click="generateKey">{{ t('settings.generate') }}</button>
+              </div>
+              <span class="form-hint">{{ t('settings.apiKeyHintBefore') }} <code>X-Gateway-Key</code> {{ t('settings.apiKeyHintAfter') }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- This node's identity; the central server itself is fixed and not shown -->
+        <div class="section-group">
+          <h3 class="group-title">{{ t('settings.nodeTitle') }}</h3>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Gateway Server Key (GATEWAY_SERVER_KEY)</label>
+              <label class="form-label">{{ t('settings.serverKeyLabel') }} (GATEWAY_SERVER_KEY)</label>
               <div class="input-with-action">
                 <input v-model="form.gateway_server_key" type="text" class="font-mono" />
-                <button class="btn-secondary btn-sm" @click="generateServerKey">Generate</button>
+                <button class="btn-secondary btn-sm" @click="generateServerKey">{{ t('settings.generate') }}</button>
               </div>
-              <span class="form-hint">Unique identifier for this node, matching the <code>server_key</code> stored on the tenant number. Must differ from every other server — the backend rejects a duplicate and pairing only reaches the node that owns this key.</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Central API Key (CENTRAL_API_KEY)</label>
-              <input v-model="form.central_api_key" type="text" class="font-mono" />
-              <span class="form-hint">Shared key used to authenticate with the central backend WebSocket.</span>
+              <span class="form-hint">{{ t('settings.serverKeyHintBefore') }} <code>server_key</code> {{ t('settings.serverKeyHintAfter') }}</span>
             </div>
           </div>
         </div>
 
         <!-- Storage & System -->
         <div class="section-group">
-          <h3 class="group-title">Storage & Logging</h3>
+          <h3 class="group-title">{{ t('settings.storageTitle') }}</h3>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Session Directory (SESSION_DIR)</label>
+              <label class="form-label">{{ t('settings.sessionDirLabel') }} (SESSION_DIR)</label>
               <input v-model="form.session_dir" type="text" class="font-mono" />
-              <span class="form-hint">Local filesystem folder where SQLite session databases (*.db) are stored.</span>
+              <span class="form-hint">{{ t('settings.sessionDirHint') }}</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Log Level (LOG_LEVEL)</label>
+              <label class="form-label">{{ t('settings.logLevelLabel') }} (LOG_LEVEL)</label>
               <select v-model="form.log_level">
-                <option value="debug">Debug (Verbose)</option>
-                <option value="info">Info (Standard)</option>
-                <option value="warn">Warn (Warnings only)</option>
-                <option value="error">Error (Errors only)</option>
+                <option value="debug">{{ t('settings.logDebug') }}</option>
+                <option value="info">{{ t('settings.logInfo') }}</option>
+                <option value="warn">{{ t('settings.logWarn') }}</option>
+                <option value="error">{{ t('settings.logError') }}</option>
               </select>
-              <span class="form-hint">Verbosity level of the Go daemon log output.</span>
+              <span class="form-hint">{{ t('settings.logLevelHint') }}</span>
             </div>
           </div>
         </div>
@@ -109,6 +103,10 @@
 import { ref, watch, computed } from "vue";
 import ServicePanel from "./ServicePanel.vue";
 import type { GatewayConfig } from "../types";
+import { t, useI18n } from "../i18n";
+import type { Locale } from "../locales";
+
+const { locale, setLocale, locales } = useI18n();
 
 const props = defineProps<{
   config: GatewayConfig;
@@ -138,7 +136,7 @@ const generateKey = () => {
     key += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   form.value.gateway_api_key = key;
-  emit("toast", "Generated new random API key");
+  emit("toast", t("settings.toastApiKey"));
 };
 
 const generateServerKey = () => {
@@ -148,7 +146,7 @@ const generateServerKey = () => {
     key += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   form.value.gateway_server_key = key;
-  emit("toast", "Generated new unique server key");
+  emit("toast", t("settings.toastServerKey"));
 };
 
 const save = () => {

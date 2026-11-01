@@ -1,0 +1,16 @@
+export default {
+  tabs: { dashboard: 'Dasbor', sessions: 'Perangkat', sandbox: 'Uji', logs: 'Log', settings: 'Pengaturan' },
+  daemonOn: 'Daemon aktif di :{port}',
+  daemonStopped: 'Daemon berhenti',
+  starting: 'Memulai…',
+  online: 'Online',
+  offline: 'Offline',
+  linked: 'Tertaut',
+  linkedTitle: 'Terhubung ke backend tenant',
+  notLinkedTitle: 'Tidak terhubung ke backend tenant',
+  start: 'Mulai',
+  startTitle: 'Mulai Daemon WhatsApp Go',
+  restartTitle: 'Mulai ulang Daemon Go',
+  stopTitle: 'Hentikan Daemon Go',
+  language: 'Bahasa',
+}

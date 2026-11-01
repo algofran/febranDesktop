@@ -1,0 +1,16 @@
+export default {
+  tabs: { dashboard: 'Dashboard', sessions: 'Devices', sandbox: 'Test', logs: 'Logs', settings: 'Settings' },
+  daemonOn: 'Daemon on :{port}',
+  daemonStopped: 'Daemon stopped',
+  starting: 'Starting…',
+  online: 'Online',
+  offline: 'Offline',
+  linked: 'Linked',
+  linkedTitle: 'Connected to tenant backend',
+  notLinkedTitle: 'Not connected to tenant backend',
+  start: 'Start',
+  startTitle: 'Start Go WhatsApp Daemon',
+  restartTitle: 'Restart Go Daemon',
+  stopTitle: 'Stop Go Daemon',
+  language: 'Language',
+}

@@ -34,10 +34,10 @@ export const api = {
     return {
       gateway_bind: "127.0.0.1:8989",
       gateway_api_key: "dev-gateway-key-2024",
-      central_webhook_url: "http://localhost:8080/api/v1/webhooks/gateway",
-      central_ws_url: "ws://localhost:8080/ws/gateway",
+      central_webhook_url: "https://febran.com/api/v1/webhooks/gateway",
+      central_ws_url: "wss://febran.com/ws/gateway",
       gateway_server_key: "node-1",
-      central_api_key: "dev-central-key-2024",
+      central_api_key: "",
       session_dir: "./sessions",
       log_level: "info",
     };

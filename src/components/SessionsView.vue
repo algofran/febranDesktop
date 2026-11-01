@@ -5,36 +5,36 @@
       <div class="glass-panel main-col">
         <div class="col-header">
           <div>
-            <h2 class="col-title">Registered WhatsApp Devices</h2>
-            <p class="col-subtitle">Multi-device SQLite sessions active on this daemon node</p>
+            <h2 class="col-title">{{ t('sessions.devicesTitle') }}</h2>
+            <p class="col-subtitle">{{ t('sessions.devicesSubtitle') }}</p>
           </div>
           <div class="header-actions">
             <button 
               class="btn-secondary btn-sm" 
               :disabled="syncingAll || !hasConnectedSessions" 
               @click="syncAllData"
-              title="Tarik dan sinkronkan semua kontak dan grup dari seluruh nomor yang terhubung ke backend"
+              :title="t('sessions.syncAllTooltip')"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'spin-icon': syncingAll }">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
               </svg>
-              <span>{{ syncingAll ? 'Menyinkronkan...' : 'Tarik & Sync Semua' }}</span>
+              <span>{{ syncingAll ? t('sessions.syncingAll') : t('sessions.syncAll') }}</span>
             </button>
             <button class="btn-primary btn-sm" @click="openPairModal">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>Add Number</span>
+              <span>{{ t('sessions.addNumber') }}</span>
             </button>
           </div>
         </div>
 
         <div v-if="sessions.length === 0" class="empty-box">
           <div class="empty-icon">📱</div>
-          <div class="empty-title">No sessions registered</div>
-          <div class="empty-desc">Click "Add Number" to scan a QR code with your WhatsApp mobile app.</div>
-          <button class="btn-primary" @click="openPairModal">Start QR Pairing</button>
+          <div class="empty-title">{{ t('sessions.emptyTitle') }}</div>
+          <div class="empty-desc">{{ t('sessions.emptyDesc') }}</div>
+          <button class="btn-primary" @click="openPairModal">{{ t('sessions.startQrPairing') }}</button>
         </div>
 
         <div v-else class="sessions-list">
@@ -52,14 +52,14 @@
               </div>
               <div>
                 <div class="session-phone font-mono">{{ s.number_id }}</div>
-                <div class="session-db">File: {{ s.number_id }}.db</div>
+                <div class="session-db">{{ t('sessions.file', { name: s.number_id + '.db' }) }}</div>
 
                 <div v-if="s.pairing_key" class="pairing-key-row">
-                  <span class="pairing-key-label">Pairing Key:</span>
+                  <span class="pairing-key-label">{{ t('sessions.pairingKey') }}</span>
                   <code class="pairing-key-code">{{ s.pairing_key }}</code>
                   <button
                     class="pairing-key-copy"
-                    title="Salin Kode Pairing"
+                    :title="t('sessions.copyPairingKey')"
                     @click="copyKey(s.pairing_key)"
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -69,14 +69,14 @@
                   </button>
                 </div>
                 <div v-if="s.pairing_key" class="pairing-key-helper">
-                  Gunakan kode ini saat mendaftarkan nomor di Web Panel Tenant.
+                  {{ t('sessions.pairingKeyHelper') }}
                 </div>
               </div>
             </div>
 
             <div class="session-status">
               <span :class="['badge', s.connected ? 'badge-success' : 'badge-warning']">
-                {{ s.connected ? 'Connected' : 'Disconnected' }}
+                {{ s.connected ? t('sessions.connected') : t('sessions.disconnected') }}
               </span>
             </div>
 
@@ -86,25 +86,25 @@
                 class="btn-secondary btn-sm"
                 :disabled="syncingDevice[s.number_id]"
                 @click="syncDeviceData(s.number_id)"
-                title="Tarik kontak & grup dari nomor ini dan sinkronkan ke backend"
+                :title="t('sessions.syncDeviceTooltip')"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'spin-icon': syncingDevice[s.number_id] }">
                   <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
                 </svg>
-                <span>{{ syncingDevice[s.number_id] ? 'Syncing...' : 'Sync Data' }}</span>
+                <span>{{ syncingDevice[s.number_id] ? t('sessions.syncing') : t('sessions.syncData') }}</span>
               </button>
               <button 
                 v-if="!s.connected" 
                 class="btn-secondary btn-sm" 
                 @click="startPairing()"
               >
-                Scan QR
+                {{ t('sessions.scanQr') }}
               </button>
               <button 
                 class="btn-danger btn-sm" 
                 @click="logoutDevice(s.number_id)"
               >
-                Logout
+                {{ t('sessions.logout') }}
               </button>
             </div>
           </div>
@@ -115,8 +115,8 @@
       <div class="glass-panel side-col">
         <div class="col-header">
           <div>
-            <h3 class="col-title">QR Pairing Terminal</h3>
-            <p class="col-subtitle">Scan via WhatsApp > Linked Devices</p>
+            <h3 class="col-title">{{ t('sessions.qrTitle') }}</h3>
+            <p class="col-subtitle">{{ t('sessions.qrSubtitle') }}</p>
           </div>
         </div>
 
@@ -129,37 +129,37 @@
               <rect x="3" y="14" width="7" height="7"/>
             </svg>
           </div>
-          <div class="idle-title">No Active Pairing</div>
-          <p class="idle-desc">Click the button below to generate a QR code. Then scan it with WhatsApp on your phone.</p>
+          <div class="idle-title">{{ t('sessions.idleTitle') }}</div>
+          <p class="idle-desc">{{ t('sessions.idleDesc') }}</p>
           <button 
             class="btn-primary" 
             :disabled="loading" 
             @click="startPairing()"
           >
-            Start QR Pairing
+            {{ t('sessions.startQrPairing') }}
           </button>
         </div>
 
         <div v-else class="qr-active-box">
           <div v-if="activePairNumberId" class="qr-target-info">
-            <span>Session:</span>
+            <span>{{ t('sessions.session') }}</span>
             <span class="font-mono font-bold">{{ activePairNumberId }}</span>
           </div>
 
           <div class="qr-frame">
             <div v-if="qrLoading" class="qr-spinner">
               <div class="loading-spinner"></div>
-              <span>Generating QR Code...</span>
+              <span>{{ t('sessions.generatingQr') }}</span>
             </div>
             <img 
               v-else-if="qrCodeData" 
               :src="qrCodeData" 
-              alt="WhatsApp Pairing QR" 
+              :alt="t('sessions.qrAlt')" 
               class="qr-image"
             />
             <div v-else class="qr-error">
-              <span>QR Expired or Device Already Paired</span>
-              <button class="btn-secondary btn-sm" @click="fetchQR">Refresh QR</button>
+              <span>{{ t('sessions.qrExpired') }}</span>
+              <button class="btn-secondary btn-sm" @click="fetchQR">{{ t('sessions.refreshQr') }}</button>
             </div>
           </div>
 
@@ -169,9 +169,9 @@
 
           <div class="qr-instructions">
             <ol>
-              <li>Open WhatsApp on your mobile phone</li>
-              <li>Tap <strong>Settings</strong> > <strong>Linked Devices</strong></li>
-              <li>Tap <strong>Link a Device</strong> and point your camera at this QR code</li>
+              <li>{{ t('sessions.step1') }}</li>
+              <li>{{ t('sessions.tap') }} <strong>{{ t('sessions.settings') }}</strong> > <strong>{{ t('sessions.linkedDevices') }}</strong></li>
+              <li>{{ t('sessions.tap') }} <strong>{{ t('sessions.linkDevice') }}</strong> {{ t('sessions.step3Rest') }}</li>
             </ol>
           </div>
 
@@ -181,9 +181,9 @@
                 <polyline points="23 4 23 10 17 10"/>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
-              <span>Refresh</span>
+              <span>{{ t('sessions.refresh') }}</span>
             </button>
-            <button class="btn-danger btn-sm" @click="cancelPairing">Cancel</button>
+            <button class="btn-danger btn-sm" @click="cancelPairing">{{ t('sessions.cancel') }}</button>
           </div>
         </div>
       </div>
@@ -194,23 +194,23 @@
       <div class="glass-panel sync-modal-content">
         <div class="sync-modal-header">
           <div>
-            <h3 class="sync-modal-title">Hasil Penarikan & Sinkronisasi</h3>
-            <p class="sync-modal-subtitle">Kontak dan grup WhatsApp berhasil ditarik dan disinkronkan ke backend pusat</p>
+            <h3 class="sync-modal-title">{{ t('sessions.resultTitle') }}</h3>
+            <p class="sync-modal-subtitle">{{ t('sessions.resultSubtitle') }}</p>
           </div>
           <button class="icon-btn-close" @click="syncResultModal = false">✕</button>
         </div>
 
         <div class="sync-summary-grid">
           <div class="sync-stat-card">
-            <span class="sync-stat-label">Sesi / Nomor</span>
+            <span class="sync-stat-label">{{ t('sessions.statSessions') }}</span>
             <span class="sync-stat-num text-emerald">{{ syncStats.sessions }}</span>
           </div>
           <div class="sync-stat-card">
-            <span class="sync-stat-label">Total Kontak</span>
+            <span class="sync-stat-label">{{ t('sessions.statContacts') }}</span>
             <span class="sync-stat-num text-emerald">{{ syncStats.contacts }}</span>
           </div>
           <div class="sync-stat-card">
-            <span class="sync-stat-label">Total Grup</span>
+            <span class="sync-stat-label">{{ t('sessions.statGroups') }}</span>
             <span class="sync-stat-num text-emerald">{{ syncStats.groups }}</span>
           </div>
         </div>
@@ -227,8 +227,8 @@
                 <span class="font-mono font-bold">{{ item.number_id }}</span>
               </div>
               <div class="sync-badges">
-                <span class="badge badge-success">{{ item.contacts.length }} Kontak</span>
-                <span class="badge badge-neutral">{{ item.groups.length }} Grup</span>
+                <span class="badge badge-success">{{ t('sessions.contactsCount', { n: item.contacts.length }) }}</span>
+                <span class="badge badge-neutral">{{ t('sessions.groupsCount', { n: item.groups.length }) }}</span>
               </div>
             </div>
             
@@ -238,27 +238,27 @@
 
             <div class="sync-sample-lists">
               <div class="sync-sample-col" v-if="item.groups.length > 0">
-                <div class="sample-label">Grup WhatsApp ({{ item.groups.length }})</div>
+                <div class="sample-label">{{ t('sessions.whatsappGroups', { n: item.groups.length }) }}</div>
                 <div class="sample-items">
                   <div v-for="(g, idx) in item.groups.slice(0, 5)" :key="idx" class="sample-row">
                     <span class="truncate">{{ g.name || g.Name || g.jid || g.JID }}</span>
-                    <span class="font-mono text-xs">{{ g.participant_count || g.ParticipantCount || g.member_count || 0 }} member</span>
+                    <span class="font-mono text-xs">{{ t('sessions.membersCount', { n: g.participant_count || g.ParticipantCount || g.member_count || 0 }) }}</span>
                   </div>
                   <div v-if="item.groups.length > 5" class="sample-more">
-                    +{{ item.groups.length - 5 }} grup lainnya
+                    {{ t('sessions.moreGroups', { n: item.groups.length - 5 }) }}
                   </div>
                 </div>
               </div>
 
               <div class="sync-sample-col" v-if="item.contacts.length > 0">
-                <div class="sample-label">Kontak WhatsApp ({{ item.contacts.length }})</div>
+                <div class="sample-label">{{ t('sessions.whatsappContacts', { n: item.contacts.length }) }}</div>
                 <div class="sample-items">
                   <div v-for="(c, idx) in item.contacts.slice(0, 5)" :key="idx" class="sample-row">
                     <span class="truncate">{{ c.name || c.phone }}</span>
                     <span class="font-mono text-xs">{{ c.phone }}</span>
                   </div>
                   <div v-if="item.contacts.length > 5" class="sample-more">
-                    +{{ item.contacts.length - 5 }} kontak lainnya
+                    {{ t('sessions.moreContacts', { n: item.contacts.length - 5 }) }}
                   </div>
                 </div>
               </div>
@@ -267,7 +267,7 @@
         </div>
 
         <div class="sync-modal-footer">
-          <button class="btn-primary btn-sm" @click="syncResultModal = false">Tutup</button>
+          <button class="btn-primary btn-sm" @click="syncResultModal = false">{{ t('sessions.close') }}</button>
         </div>
       </div>
     </div>
@@ -277,6 +277,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from "vue";
 import { api } from "../api";
+import { t } from "../i18n";
 import type { SessionInfo, AllSyncResult, SessionSyncData } from "../types";
 
 const props = defineProps<{
@@ -334,10 +335,10 @@ const syncAllData = async () => {
     lastSyncResult.value = res.data;
     lastSyncType.value = 'all';
     syncResultModal.value = true;
-    emit("toast", `Sinkronisasi berhasil: ${res.data.total_contacts} kontak & ${res.data.total_groups} grup dari ${res.data.total_sessions} nomor`, "success");
+    emit("toast", t('sessions.syncAllOk', { contacts: res.data.total_contacts, groups: res.data.total_groups, sessions: res.data.total_sessions }), "success");
     emit("refresh-sessions");
   } catch (err: unknown) {
-    emit("toast", `Gagal sinkronkan semua: ${err instanceof Error ? err.message : String(err)}`, "error");
+    emit("toast", t('sessions.syncAllFail', { error: err instanceof Error ? err.message : String(err) }), "error");
   } finally {
     syncingAll.value = false;
   }
@@ -351,10 +352,10 @@ const syncDeviceData = async (numberId: string) => {
     lastSyncResult.value = res.data;
     lastSyncType.value = 'device';
     syncResultModal.value = true;
-    emit("toast", `Sinkronisasi ${numberId} berhasil: ${res.data.contacts.length} kontak & ${res.data.groups.length} grup`, "success");
+    emit("toast", t('sessions.syncDeviceOk', { id: numberId, contacts: res.data.contacts.length, groups: res.data.groups.length }), "success");
     emit("refresh-sessions");
   } catch (err: unknown) {
-    emit("toast", `Gagal sinkronkan ${numberId}: ${err instanceof Error ? err.message : String(err)}`, "error");
+    emit("toast", t('sessions.syncDeviceFail', { id: numberId, error: err instanceof Error ? err.message : String(err) }), "error");
   } finally {
     syncingDevice.value[numberId] = false;
   }
@@ -384,11 +385,11 @@ const startPairing = async () => {
   try {
     const res = await api.pairQR();
     activePairNumberId.value = res.session_id;
-    emit("toast", "QR pairing started — scan with your phone");
+    emit("toast", t('sessions.pairingStarted'));
     startPolling();
   } catch (err: unknown) {
     console.error("Pair error:", err);
-    emit("toast", `Pairing failed: ${err instanceof Error ? err.message : String(err)}`, "error");
+    emit("toast", t('sessions.pairingFailed', { error: err instanceof Error ? err.message : String(err) }), "error");
     cancelPairing();
   }
 };
@@ -399,7 +400,7 @@ const fetchQR = async () => {
     // Check if connected first
     const status = await api.getSessionStatus(activePairNumberId.value);
     if (status.connected) {
-      emit("toast", `Number ${activePairNumberId.value} connected successfully!`, "success");
+      emit("toast", t('sessions.connectedOk', { id: activePairNumberId.value }), "success");
       cancelPairing();
       emit("refresh-sessions");
       return;
@@ -460,20 +461,20 @@ const copyKey = async (key?: string) => {
   if (!key) return;
   try {
     await navigator.clipboard.writeText(key);
-    emit("toast", "Pairing key disalin", "success");
+    emit("toast", t('sessions.keyCopied'), "success");
   } catch {
-    emit("toast", "Gagal menyalin pairing key", "error");
+    emit("toast", t('sessions.keyCopyFailed'), "error");
   }
 };
 
 const logoutDevice = async (numberId: string) => {
-  if (!confirm(`Are you sure you want to log out and delete session for ${numberId}?`)) return;
+  if (!confirm(t('sessions.logoutConfirm', { id: numberId }))) return;
   try {
     await api.logout(numberId, false);
-    emit("toast", `Logged out ${numberId}`, "success");
+    emit("toast", t('sessions.loggedOut', { id: numberId }), "success");
     emit("refresh-sessions");
   } catch (err: unknown) {
-    emit("toast", `Logout failed: ${err instanceof Error ? err.message : String(err)}`, "error");
+    emit("toast", t('sessions.logoutFailed', { error: err instanceof Error ? err.message : String(err) }), "error");
   }
 };
 

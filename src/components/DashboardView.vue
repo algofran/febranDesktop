@@ -6,33 +6,33 @@
         <div class="status-header">
           <div class="status-indicator-badge">
             <span :class="['status-dot-large', status.running ? 'active' : 'inactive', { loading }]"></span>
-            <span class="status-title">{{ loading ? 'STARTING GO DAEMON...' : (status.running ? 'GO DAEMON IS RUNNING' : 'GO DAEMON IS STOPPED') }}</span>
+            <span class="status-title">{{ loading ? t('dashboard.hero.starting') : (status.running ? t('dashboard.hero.running') : t('dashboard.hero.stopped')) }}</span>
           </div>
           <span v-if="status.running" class="badge badge-success">HTTP 200 OK</span>
-          <span v-else class="badge badge-danger">OFFLINE</span>
+          <span v-else class="badge badge-danger">{{ t('dashboard.hero.offline') }}</span>
         </div>
 
-        <h1 class="controller-title">WhatsApp Session Transport Node</h1>
+        <h1 class="controller-title">{{ t('dashboard.hero.title') }}</h1>
         <p class="controller-desc">
-          Pure-Go daemon running WhatsApp multi-device engine (<code>whatsmeow</code>). Handles local SQLite sessions, manages QR code pairing, dispatches outbound messages, and relays inbound events to your central backend.
+          {{ t('dashboard.hero.descBefore') }}<code>whatsmeow</code>{{ t('dashboard.hero.descAfter') }}
         </p>
 
         <!-- Live Daemon Metadata Pills -->
         <div class="daemon-meta-bar font-mono">
           <div class="meta-pill">
-            <span class="meta-label">Local Host:</span>
+            <span class="meta-label">{{ t('dashboard.meta.localHost') }}</span>
             <span class="meta-val">{{ status.bind }}</span>
           </div>
           <div class="meta-pill">
-            <span class="meta-label">Process PID:</span>
-            <span class="meta-val">{{ status.pid || 'Inactive' }}</span>
+            <span class="meta-label">{{ t('dashboard.meta.pid') }}</span>
+            <span class="meta-val">{{ status.pid || t('dashboard.meta.inactive') }}</span>
           </div>
           <div class="meta-pill">
-            <span class="meta-label">Storage:</span>
+            <span class="meta-label">{{ t('dashboard.meta.storage') }}</span>
             <span class="meta-val">{{ config.session_dir }}</span>
           </div>
           <div class="meta-pill">
-            <span class="meta-label">Webhook:</span>
+            <span class="meta-label">{{ t('dashboard.meta.webhook') }}</span>
             <span class="meta-val truncate-pill">{{ config.central_webhook_url }}</span>
           </div>
         </div>
@@ -41,8 +41,8 @@
       <!-- Primary Action Buttons Box -->
       <div class="controller-actions">
         <div v-if="svc.installed" class="service-note">
-          <span>Berjalan sebagai service Windows — kelola di Pengaturan › Mode Service</span>
-          <button class="btn-secondary btn-sm" @click="$emit('open-settings')">Buka Pengaturan</button>
+          <span>{{ t('dashboard.serviceNote') }}</span>
+          <button class="btn-secondary btn-sm" @click="$emit('open-settings')">{{ t('dashboard.openSettings') }}</button>
         </div>
         <button 
           v-if="!status.running" 
@@ -57,8 +57,8 @@
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
           <div class="btn-text-block">
-            <span class="btn-main-label">{{ loading ? 'Starting...' : 'Start Go Daemon' }}</span>
-            <span class="btn-sub-label">Launch background service</span>
+            <span class="btn-main-label">{{ loading ? t('dashboard.btn.starting') : t('dashboard.btn.start') }}</span>
+            <span class="btn-sub-label">{{ t('dashboard.btn.launchSub') }}</span>
           </div>
         </button>
 
@@ -72,7 +72,7 @@
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-            <span>Restart Daemon</span>
+            <span>{{ t('dashboard.btn.restart') }}</span>
           </button>
 
           <button 
@@ -83,7 +83,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <rect x="6" y="6" width="12" height="12" rx="2"/>
             </svg>
-            <span>Stop Daemon</span>
+            <span>{{ t('dashboard.btn.stop') }}</span>
           </button>
         </div>
 
@@ -93,14 +93,14 @@
               <rect x="5" y="2" width="14" height="20" rx="2"/>
               <line x1="12" y1="18" x2="12.01" y2="18"/>
             </svg>
-            <span>Scan QR Code</span>
+            <span>{{ t('dashboard.btn.scanQr') }}</span>
           </button>
           <button class="btn-secondary btn-sm" @click="$emit('open-test')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
-            <span>Test Message</span>
+            <span>{{ t('dashboard.btn.testMessage') }}</span>
           </button>
         </div>
       </div>
@@ -110,12 +110,12 @@
     <div class="stats-grid">
       <div class="glass-panel stat-card">
         <div class="stat-header">
-          <span class="stat-label">Daemon State</span>
+          <span class="stat-label">{{ t('dashboard.stats.daemonState') }}</span>
           <span :class="['badge', status.running ? 'badge-success' : 'badge-danger']">
-            {{ status.running ? 'ONLINE' : 'STOPPED' }}
+            {{ status.running ? t('dashboard.stats.online') : t('dashboard.stats.stopped') }}
           </span>
         </div>
-        <div class="stat-value">{{ status.running ? 'Active & Listening' : 'Inactive' }}</div>
+        <div class="stat-value">{{ status.running ? t('dashboard.stats.activeListening') : t('dashboard.stats.inactive') }}</div>
         <div class="stat-sub">
           <span class="stat-mono">Port :{{ status.bind.split(':')[1] || '8989' }}</span>
           <span v-if="status.pid" class="stat-mono">• PID {{ status.pid }}</span>
@@ -124,31 +124,31 @@
 
       <div class="glass-panel stat-card">
         <div class="stat-header">
-          <span class="stat-label">Active WA Sessions</span>
-          <span class="badge badge-success">{{ connectedSessionsCount }} Connected</span>
+          <span class="stat-label">{{ t('dashboard.stats.activeSessions') }}</span>
+          <span class="badge badge-success">{{ t('dashboard.stats.connectedCount', { n: connectedSessionsCount }) }}</span>
         </div>
         <div class="stat-value">{{ totalSessionsCount }}</div>
-        <div class="stat-sub">SQLite multi-device files</div>
+        <div class="stat-sub">{{ t('dashboard.stats.sqliteFiles') }}</div>
       </div>
 
       <div class="glass-panel stat-card">
         <div class="stat-header">
-          <span class="stat-label">Central Webhook</span>
+          <span class="stat-label">{{ t('dashboard.stats.centralWebhook') }}</span>
           <span :class="['badge', webhookConfigured ? 'badge-success' : 'badge-warning']">
-            {{ webhookConfigured ? 'CONNECTED' : 'NOT SET' }}
+            {{ webhookConfigured ? t('dashboard.stats.connected') : t('dashboard.stats.notSet') }}
           </span>
         </div>
         <div class="stat-value truncate">{{ truncateUrl(config.central_webhook_url) }}</div>
-        <div class="stat-sub">Inbound & status dispatcher</div>
+        <div class="stat-sub">{{ t('dashboard.stats.inboundDispatcher') }}</div>
       </div>
 
       <div class="glass-panel stat-card">
         <div class="stat-header">
-          <span class="stat-label">Transport Driver</span>
+          <span class="stat-label">{{ t('dashboard.stats.transportDriver') }}</span>
           <span class="badge badge-neutral">pure-Go SQLite</span>
         </div>
         <div class="stat-value stat-mono">{{ config.session_dir }}</div>
-        <div class="stat-sub">Zero CGO / pure Go binary</div>
+        <div class="stat-sub">{{ t('dashboard.stats.zeroCgo') }}</div>
       </div>
     </div>
 
@@ -158,35 +158,35 @@
       <div class="glass-panel section-card">
         <div class="section-header">
           <div class="section-title-box">
-            <h3 class="section-title">Connected WhatsApp Devices</h3>
-            <span class="badge badge-neutral">{{ sessions.length }} Total</span>
+            <h3 class="section-title">{{ t('dashboard.devices.title') }}</h3>
+            <span class="badge badge-neutral">{{ t('dashboard.devices.total', { n: sessions.length }) }}</span>
           </div>
           <div class="section-header-actions">
             <button 
               class="btn-secondary btn-sm" 
               :disabled="loading || !hasConnectedSessions" 
               @click="$emit('sync-all')"
-              title="Tarik dan sinkronkan semua kontak dan grup ke backend pusat"
+              :title="t('dashboard.devices.syncAllTitle')"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
               </svg>
-              <span>Sync Semua Data</span>
+              <span>{{ t('dashboard.devices.syncAll') }}</span>
             </button>
             <button class="btn-secondary btn-sm" @click="$emit('refresh-sessions')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="23 4 23 10 17 10"/>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
-              <span>Refresh</span>
+              <span>{{ t('dashboard.devices.refresh') }}</span>
             </button>
           </div>
         </div>
 
         <div v-if="sessions.length === 0" class="empty-state">
           <div class="empty-icon">📱</div>
-          <div class="empty-text">No WhatsApp sessions registered yet.</div>
-          <button class="btn-primary btn-sm" @click="$emit('open-pairing')">Pair First Device</button>
+          <div class="empty-text">{{ t('dashboard.devices.empty') }}</div>
+          <button class="btn-primary btn-sm" @click="$emit('open-pairing')">{{ t('dashboard.devices.pairFirst') }}</button>
         </div>
 
         <div v-else class="devices-table">
@@ -200,13 +200,13 @@
               </div>
               <div>
                 <div class="device-number font-mono">{{ session.number_id }}</div>
-                <div class="device-meta">Storage: {{ session.number_id }}.db</div>
+                <div class="device-meta">{{ t('dashboard.devices.storage', { file: session.number_id + '.db' }) }}</div>
                 <div v-if="session.pairing_key" class="pairing-key-row">
-                  <span class="pairing-key-label">Pairing Key:</span>
+                  <span class="pairing-key-label">{{ t('dashboard.devices.pairingKey') }}</span>
                   <code class="pairing-key-code">{{ session.pairing_key }}</code>
                   <button
                     class="pairing-key-copy"
-                    title="Salin Kode Pairing"
+                    :title="t('dashboard.devices.copyPairingKey')"
                     @click="copyKey(session.pairing_key)"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,14 +214,14 @@
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                     </svg>
                   </button>
-                  <span v-if="copiedKey === session.number_id" class="pairing-key-copied">✓ Disalin</span>
+                  <span v-if="copiedKey === session.number_id" class="pairing-key-copied">✓ {{ t('dashboard.devices.copied') }}</span>
                 </div>
               </div>
             </div>
 
             <div class="device-status">
               <span :class="['badge', session.connected ? 'badge-success' : 'badge-warning']">
-                {{ session.connected ? 'Connected' : 'Disconnected' }}
+                {{ session.connected ? t('dashboard.devices.connected') : t('dashboard.devices.disconnected') }}
               </span>
             </div>
 
@@ -230,22 +230,22 @@
                 v-if="session.connected" 
                 class="btn-secondary btn-sm" 
                 @click="$emit('sync-device', session.number_id)"
-                title="Tarik kontak & grup dan sinkronkan ke backend pusat"
+                :title="t('dashboard.devices.syncTitle')"
               >
-                Sync Data
+                {{ t('dashboard.devices.sync') }}
               </button>
               <button 
                 v-if="!session.connected" 
                 class="btn-primary btn-sm" 
                 @click="$emit('reconnect-device', session.number_id)"
               >
-                Scan QR
+                {{ t('dashboard.devices.scanQr') }}
               </button>
               <button 
                 class="btn-danger btn-sm" 
                 @click="$emit('logout-device', session.number_id)"
               >
-                Logout
+                {{ t('dashboard.devices.logout') }}
               </button>
             </div>
           </div>
@@ -255,18 +255,18 @@
       <!-- Quick Architecture Info -->
       <div class="glass-panel section-card">
         <div class="section-header">
-          <h3 class="section-title">Transport Architecture</h3>
+          <h3 class="section-title">{{ t('dashboard.arch.title') }}</h3>
           <span class="badge badge-success">HTTP & Webhook</span>
         </div>
 
         <div class="arch-flow">
           <div class="arch-node">
             <div class="arch-node-title">febranBackend</div>
-            <div class="arch-node-desc">Central API</div>
+            <div class="arch-node-desc">{{ t('dashboard.arch.centralApi') }}</div>
           </div>
           <div class="arch-arrow">
             <span>⇄</span>
-            <div class="arch-label">Commands / Webhook</div>
+            <div class="arch-label">{{ t('dashboard.arch.commandsWebhook') }}</div>
           </div>
           <div class="arch-node current">
             <div class="arch-node-title">febranDesktop</div>
@@ -278,22 +278,22 @@
           </div>
           <div class="arch-node">
             <div class="arch-node-title">WhatsApp</div>
-            <div class="arch-node-desc">Web Servers</div>
+            <div class="arch-node-desc">{{ t('dashboard.arch.webServers') }}</div>
           </div>
         </div>
 
         <div class="arch-details">
           <div class="arch-item">
-            <span class="arch-key">Command API:</span>
+            <span class="arch-key">{{ t('dashboard.arch.commandApi') }}</span>
             <span class="arch-val font-mono">POST /api/v1/send, /pair, /groups</span>
           </div>
           <div class="arch-item">
-            <span class="arch-key">Inbound Stream:</span>
+            <span class="arch-key">{{ t('dashboard.arch.inboundStream') }}</span>
             <span class="arch-val font-mono">POST {{ config.central_webhook_url }}</span>
           </div>
           <div class="arch-item">
-            <span class="arch-key">Security:</span>
-            <span class="arch-val">X-Gateway-Key Header Auth</span>
+            <span class="arch-key">{{ t('dashboard.arch.security') }}</span>
+            <span class="arch-val">{{ t('dashboard.arch.headerAuth') }}</span>
           </div>
         </div>
       </div>
@@ -304,6 +304,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
 import { useServiceState } from "../useServiceState";
+import { t } from "../i18n";
 
 const { svc, refreshServiceState } = useServiceState();
 onMounted(refreshServiceState);
@@ -357,7 +358,7 @@ const webhookConfigured = computed(() => {
 });
 
 const truncateUrl = (url: string) => {
-  if (!url) return "Not configured";
+  if (!url) return t('dashboard.stats.notConfigured');
   if (url.length > 32) return url.substring(0, 30) + "...";
   return url;
 };

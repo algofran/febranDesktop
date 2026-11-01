@@ -33,3 +33,6 @@ src-tauri/gen/schemas/
 .history/
 .playwright-mcp/
 .waylog/
+
+# Central server API key baked into release builds (see src-tauri/build.rs)
+src-tauri/central-key.txt

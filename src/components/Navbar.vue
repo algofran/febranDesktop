@@ -13,17 +13,26 @@
         @click="$emit('select-tab', tab.id)"
       >
         <span class="tab-icon" v-html="tab.icon"></span>
-        <span>{{ tab.label }}</span>
+        <span>{{ t('navbar.tabs.' + tab.id) }}</span>
       </button>
     </nav>
 
     <!-- Node State & Controls -->
     <div class="status-panel">
+      <div class="lang-switch" role="group" :aria-label="t('navbar.language')">
+        <button
+          v-for="l in locales"
+          :key="l.code"
+          :class="['lang-btn', { active: locale === l.code }]"
+          :title="l.label"
+          @click="setLocale(l.code)"
+        >{{ l.code.toUpperCase() }}</button>
+      </div>
       <div class="status-group">
         <!-- Daemon status -->
-        <div :class="['node-status-chip', status.running ? 'online' : 'offline', { loading }]" :title="status.running ? `Daemon on :${status.bind.split(':')[1] || '8989'}` : 'Daemon stopped'">
+        <div :class="['node-status-chip', status.running ? 'online' : 'offline', { loading }]" :title="status.running ? t('navbar.daemonOn', { port: status.bind.split(':')[1] || '8989' }) : t('navbar.daemonStopped')">
           <span :class="['status-dot', status.running ? 'active' : 'inactive']"></span>
-          <span class="status-text">{{ loading ? 'Starting…' : (status.running ? 'Online' : 'Offline') }}</span>
+          <span class="status-text">{{ loading ? t('navbar.starting') : (status.running ? t('navbar.online') : t('navbar.offline')) }}</span>
           <span v-if="status.running" class="port-label">:{{ status.bind.split(':')[1] || '8989' }}</span>
         </div>
 
@@ -31,10 +40,10 @@
         <div
           v-if="status.running"
           :class="['ws-status-chip', status.ws_connected ? 'connected' : 'disconnected']"
-          :title="status.ws_connected ? 'Connected to tenant backend' : 'Not connected to tenant backend'"
+          :title="status.ws_connected ? t('navbar.linkedTitle') : t('navbar.notLinkedTitle')"
         >
           <span :class="['ws-dot', status.ws_connected ? 'active' : 'inactive']"></span>
-          <span>{{ status.ws_connected ? 'Linked' : 'Offline' }}</span>
+          <span>{{ status.ws_connected ? t('navbar.linked') : t('navbar.offline') }}</span>
         </div>
       </div>
 
@@ -44,7 +53,7 @@
         class="btn-primary start-btn"
         :disabled="loading || svc.installed"
         @click="$emit('start-gateway')"
-        title="Start Go WhatsApp Daemon"
+        :title="t('navbar.startTitle')"
       >
         <svg v-if="loading" class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
@@ -52,7 +61,7 @@
         <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
-        <span>{{ loading ? 'Starting…' : 'Start' }}</span>
+        <span>{{ loading ? t('navbar.starting') : t('navbar.start') }}</span>
       </button>
 
       <div v-else class="action-btn-group">
@@ -60,7 +69,7 @@
           class="icon-btn"
           :disabled="loading || svc.installed"
           @click="$emit('restart-gateway')"
-          title="Restart Go Daemon"
+          :title="t('navbar.restartTitle')"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
@@ -71,7 +80,7 @@
           class="icon-btn stop-btn"
           :disabled="loading || svc.installed"
           @click="$emit('stop-gateway')"
-          title="Stop Go Daemon"
+          :title="t('navbar.stopTitle')"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="6" width="12" height="12" rx="2"/>
@@ -86,6 +95,9 @@
 import logoUrl from '../assets/febran-logo-dark.png'
 import type { ProcessStatus } from "../types";
 import { useServiceState } from "../useServiceState";
+import { t, useI18n } from "../i18n";
+
+const { locale, setLocale, locales } = useI18n();
 
 const { svc } = useServiceState();
 
@@ -331,5 +343,33 @@ const tabs = [
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.lang-switch {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+}
+
+.lang-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: transparent;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: 0;
+}
+
+.lang-btn:hover {
+  color: var(--text-primary);
+}
+
+.lang-btn.active {
+  color: #ffffff;
+  background: var(--accent-wa);
 }
 </style>
