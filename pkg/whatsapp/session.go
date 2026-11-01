@@ -265,6 +265,23 @@ func (m *Manager) PairingKey(numberID string) string {
 	return s.PairingKey
 }
 
+// resolvePN maps a LID address to the person's phone-number JID using the alternate address
+// WhatsApp supplied, or the local LID map. Anything else is returned unchanged.
+func resolvePN(client *whatsmeow.Client, jid, alt types.JID) types.JID {
+	if jid.Server != types.HiddenUserServer {
+		return jid
+	}
+	if alt.Server == types.DefaultUserServer && !alt.IsEmpty() {
+		return alt
+	}
+	if client != nil && client.Store != nil && client.Store.LIDs != nil {
+		if pn, err := client.Store.LIDs.GetPNForLID(context.Background(), jid); err == nil && !pn.IsEmpty() {
+			return pn
+		}
+	}
+	return jid
+}
+
 func (m *Manager) handleEvent(numberID string, evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Message:
@@ -278,14 +295,26 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 			}
 
 			if text != "" {
+				// WhatsApp may address people by an anonymous LID instead of their phone number.
+				// Report phone-number JIDs so contacts and replies line up with real numbers.
+				var client *whatsmeow.Client
+				if sess := m.findSession(numberID); sess != nil {
+					client = sess.Client
+				}
+				chatAlt := v.Info.SenderAlt
+				if v.Info.IsFromMe {
+					chatAlt = v.Info.RecipientAlt
+				}
 				m.OnMessage(InboundMessage{
 					NumberID:   numberID,
-					SenderJID:  v.Info.Sender.ToNonAD().String(),
+					SenderJID:  resolvePN(client, v.Info.Sender, v.Info.SenderAlt).ToNonAD().String(),
 					SenderName: v.Info.PushName,
-					ChatJID:    v.Info.Chat.ToNonAD().String(),
+					ChatJID:    resolvePN(client, v.Info.Chat, chatAlt).ToNonAD().String(),
 					Text:       text,
 					Timestamp:  v.Info.Timestamp,
 					IsGroup:    isGroup,
+					IsFromMe:   v.Info.IsFromMe,
+					MessageID:  v.Info.ID,
 				})
 			}
 		}

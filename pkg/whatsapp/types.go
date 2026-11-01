@@ -38,6 +38,10 @@ type InboundMessage struct {
 	Text       string
 	Timestamp  time.Time
 	IsGroup    bool
+	// IsFromMe marks a message the account owner sent from another device (the phone). SenderJID is
+	// then the owner, and ChatJID is the person or group it was sent to.
+	IsFromMe  bool
+	MessageID string
 }
 
 type StatusChange struct {
