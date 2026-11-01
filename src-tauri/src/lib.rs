@@ -64,9 +64,82 @@ pub struct LogMessage {
     pub timestamp: String,
 }
 
+/// Where this build keeps its data (WhatsApp sessions, .env). An installed (release) build uses a
+/// fixed per-user folder, %APPDATA%\Febran, so nothing depends on the working directory or on the
+/// machine the installer was built on. A dev build keeps using the project folder.
+fn data_dir() -> PathBuf {
+    if cfg!(debug_assertions) {
+        return project_root();
+    }
+    let base = std::env::var_os("APPDATA")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
+        .unwrap_or_else(|| PathBuf::from("."));
+    let dir = base.join("Febran");
+    let _ = fs::create_dir_all(&dir);
+    dir
+}
+
 fn get_env_file_path() -> PathBuf {
-    let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    current_dir.join(".env")
+    if cfg!(debug_assertions) {
+        let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        return current_dir.join(".env");
+    }
+    data_dir().join(".env")
+}
+
+fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let to = dst.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir_all(&entry.path(), &to)?;
+        } else {
+            fs::copy(entry.path(), &to)?;
+        }
+    }
+    Ok(())
+}
+
+/// Copies sessions and .env from an older location into `base`, only for what `base` does not have
+/// yet. The originals stay where they are. Returns what was copied.
+fn migrate_legacy(legacy: &std::path::Path, base: &std::path::Path) -> std::io::Result<Vec<&'static str>> {
+    let mut done = Vec::new();
+    if legacy == base {
+        return Ok(done);
+    }
+    let (old_sessions, new_sessions) = (legacy.join("sessions"), base.join("sessions"));
+    if old_sessions.is_dir() && !new_sessions.exists() {
+        copy_dir_all(&old_sessions, &new_sessions)?;
+        done.push("sessions");
+    }
+    let (old_env, new_env) = (legacy.join(".env"), base.join(".env"));
+    if old_env.is_file() && !new_env.exists() {
+        fs::copy(&old_env, &new_env)?;
+        done.push(".env");
+    }
+    Ok(done)
+}
+
+/// First start of an installed build: bring over sessions and settings from where earlier
+/// versions kept them (the project folder of the build machine, or the working directory).
+fn migrate_legacy_data() {
+    if cfg!(debug_assertions) {
+        return;
+    }
+    let base = data_dir();
+    let mut legacy = vec![project_root()];
+    if let Ok(cwd) = std::env::current_dir() {
+        legacy.push(cwd);
+    }
+    for dir in legacy {
+        match migrate_legacy(&dir, &base) {
+            Ok(done) if !done.is_empty() => eprintln!("[febran] copied {:?} from {} to {}", done, dir.display(), base.display()),
+            Ok(_) => {}
+            Err(e) => eprintln!("[febran] could not copy data from {}: {}", dir.display(), e),
+        }
+    }
 }
 
 fn load_env_config() -> GatewayConfig {
@@ -178,10 +251,10 @@ fn gateway_binary() -> Option<PathBuf> {
     candidates.into_iter().find(|p| p.exists())
 }
 
-/// Session folder as the app's own gateway resolves it (relative to the project root).
+/// Session folder as the app's own gateway resolves it (a relative setting lives under data_dir()).
 fn resolved_session_dir(config: &GatewayConfig) -> PathBuf {
     let p = PathBuf::from(&config.session_dir);
-    if p.is_absolute() { p } else { project_root().join(p) }
+    if p.is_absolute() { p } else { data_dir().join(p) }
 }
 
 #[cfg(windows)]
@@ -473,41 +546,27 @@ async fn start_gateway(app_handle: AppHandle, state: State<'_, AppState>) -> Res
     // bind port. A fresh daemon cannot bind otherwise and would exit instantly.
     kill_orphan_gateways();
 
-    // Resolve the sidecar against the crate dir (absolute, compile-time), NOT the
-    // runtime cwd. `tauri dev` runs this process with cwd = src-tauri/, so the old
-    // relative "src-tauri/binaries/..." and "gateway.exe" lookups both missed and
-    // the code fell through to `go run` with a broken relative path.
-    let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let project_root = crate_dir
-        .parent()
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| PathBuf::from("."));
-
-    let exe_name = if cfg!(windows) { "gateway-x86_64-pc-windows-msvc.exe" } else { "gateway" };
-    let sidecar_path = crate_dir.join("binaries").join(exe_name);
-    let fallback_path = project_root.join("gateway.exe");
-    // The gateway is a multi-file package, so `go run` needs the package path, not main.go.
-    let gateway_pkg = PathBuf::from("./cmd/gateway");
-
-    let binary_to_run = if sidecar_path.exists() {
-        sidecar_path
-    } else if fallback_path.exists() {
-        fallback_path
-    } else {
-        PathBuf::from("go") // Fallback: run via `go run ./cmd/gateway`
+    // The gateway program: the bundled sidecar next to the installed app, or the dev build. Never a
+    // path from the machine the installer was built on, and never `go run` in an installed app.
+    let mut cmd = match gateway_binary() {
+        Some(exe) => Command::new(exe),
+        None if cfg!(debug_assertions) => {
+            let mut c = Command::new("go");
+            c.arg("run").arg("./cmd/gateway");
+            c.current_dir(project_root());
+            c
+        }
+        None => return Err("Program gateway tidak ditemukan. Pasang ulang aplikasi.".into()),
     };
-
-    let mut cmd = if binary_to_run.to_string_lossy() == "go" {
-        let mut c = Command::new("go");
-        c.arg("run").arg(&gateway_pkg);
-        c.current_dir(&project_root);
-        c
-    } else {
-        let mut c = Command::new(&binary_to_run);
-        // .env and ./sessions are resolved by the Go daemon against its cwd.
-        c.current_dir(&project_root);
-        c
-    };
+    // The daemon's working directory is the data folder, so a relative SESSION_DIR always lands in
+    // the same place; the resolved path is also passed explicitly below.
+    let work_dir = data_dir();
+    let _ = fs::create_dir_all(&work_dir);
+    if !(cfg!(debug_assertions) && cmd.get_program().to_string_lossy() == "go") {
+        cmd.current_dir(&work_dir);
+    }
+    let session_dir = resolved_session_dir(&config);
+    let _ = fs::create_dir_all(&session_dir);
 
     cmd.env("GATEWAY_BIND", &config.gateway_bind)
         .env("GATEWAY_API_KEY", &config.gateway_api_key)
@@ -515,7 +574,7 @@ async fn start_gateway(app_handle: AppHandle, state: State<'_, AppState>) -> Res
         .env("CENTRAL_WS_URL", &config.central_ws_url)
         .env("GATEWAY_SERVER_KEY", &config.gateway_server_key)
         .env("CENTRAL_API_KEY", &config.central_api_key)
-        .env("SESSION_DIR", &config.session_dir)
+        .env("SESSION_DIR", &session_dir)
         .env("LOG_LEVEL", &config.log_level)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -717,6 +776,7 @@ async fn proxy_gateway_api(
 }
 
 pub fn run() {
+    migrate_legacy_data();
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
@@ -760,6 +820,28 @@ mod tests {
         assert_eq!(cfg.central_webhook_url, CENTRAL_WEBHOOK_URL);
         assert_eq!(cfg.central_ws_url, CENTRAL_WS_URL);
         assert_eq!(cfg.central_api_key, BAKED_CENTRAL_API_KEY.unwrap_or(DEV_CENTRAL_API_KEY));
+    }
+
+    #[test]
+    fn legacy_data_is_copied_once_and_never_overwrites() {
+        let tmp = std::env::temp_dir().join(format!("febran-mig-{}", std::process::id()));
+        let (old, new) = (tmp.join("old"), tmp.join("new"));
+        fs::create_dir_all(old.join("sessions")).unwrap();
+        fs::write(old.join("sessions").join("628111.db"), b"session").unwrap();
+        fs::write(old.join(".env"), b"GATEWAY_BIND=127.0.0.1:8989\n").unwrap();
+        fs::create_dir_all(&new).unwrap();
+
+        let done = migrate_legacy(&old, &new).unwrap();
+        assert_eq!(done, vec!["sessions", ".env"]);
+        assert_eq!(fs::read(new.join("sessions").join("628111.db")).unwrap(), b"session");
+        assert!(old.join("sessions").join("628111.db").exists(), "the original must stay");
+
+        // newer data in the destination is never replaced by the old copy
+        fs::write(new.join("sessions").join("628111.db"), b"newer").unwrap();
+        assert!(migrate_legacy(&old, &new).unwrap().is_empty());
+        assert_eq!(fs::read(new.join("sessions").join("628111.db")).unwrap(), b"newer");
+        assert!(migrate_legacy(&old, &old).unwrap().is_empty());
+        let _ = fs::remove_dir_all(&tmp);
     }
 
     #[test]
