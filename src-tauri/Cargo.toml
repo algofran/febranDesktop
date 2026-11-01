@@ -1,6 +1,6 @@
 [package]
 name = "febran-desktop"
-version = "1.0.1"
+version = "1.0.2"
 description = "Febran WA Gateway Desktop"
 edition = "2021"
 
