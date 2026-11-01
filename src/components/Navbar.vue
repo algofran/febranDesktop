@@ -1,12 +1,7 @@
 <template>
   <header class="navbar">
     <div class="brand">
-      <div class="logo-box">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="#10b981" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="brand-title">Febran</span>
+      <img class="brand-logo" :src="logoUrl" alt="Febran" />
     </div>
 
     <!-- Navigation Tabs -->
@@ -88,6 +83,7 @@
 </template>
 
 <script setup lang="ts">
+import logoUrl from '../assets/febran-logo-dark.png'
 import type { ProcessStatus } from "../types";
 import { useServiceState } from "../useServiceState";
 
@@ -153,23 +149,11 @@ const tabs = [
   gap: 0.75rem;
 }
 
-.logo-box {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-logo {
+  height: 38px;
+  width: auto;
+  display: block;
   flex-shrink: 0;
-}
-
-.brand-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
 }
 
 .nav-tabs {
@@ -200,7 +184,7 @@ const tabs = [
 
 .tab-btn.active {
   background: var(--bg-surface-elevated);
-  color: #34d399;
+  color: #F2784F;
   border-color: rgba(255, 255, 255, 0.08);
   font-weight: 600;
   box-shadow: var(--shadow-sm);
@@ -265,9 +249,9 @@ const tabs = [
 }
 
 .ws-status-chip.connected {
-  background: rgba(59, 130, 246, 0.12);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .ws-status-chip.disconnected {
@@ -283,8 +267,8 @@ const tabs = [
 }
 
 .ws-dot.active {
-  background-color: #3b82f6;
-  box-shadow: 0 0 8px #3b82f6;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
 }
 
 .ws-dot.inactive {
@@ -308,13 +292,13 @@ const tabs = [
   padding: 0 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
-  background: #10b981;
+  background: #E15A32;
   color: #022c1b;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 15px rgba(225, 90, 50, 0.3);
 }
 .start-btn:hover {
-  background: #059669;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  background: #C94A25;
+  box-shadow: 0 0 20px rgba(225, 90, 50, 0.45);
 }
 
 .icon-btn {

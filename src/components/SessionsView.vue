@@ -220,7 +220,7 @@
           <div v-for="item in syncDetails" :key="item.number_id" class="sync-device-card">
             <div class="sync-device-head">
               <div class="device-title-row">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E15A32" stroke-width="2">
                   <rect x="5" y="2" width="14" height="20" rx="2"/>
                   <line x1="12" y1="18" x2="12.01" y2="18"/>
                 </svg>
@@ -569,8 +569,8 @@ onUnmounted(() => {
 }
 
 .session-card.selected {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
+  border-color: #E15A32;
+  background: rgba(225, 90, 50, 0.06);
 }
 
 .session-main {
@@ -616,7 +616,7 @@ onUnmounted(() => {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  color: #60a5fa;
+  color: #FDB000;
   background: #1e293b;
   padding: 0.2rem 0.45rem;
   border-radius: 4px;
@@ -737,8 +737,8 @@ onUnmounted(() => {
 .loading-spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(16, 185, 129, 0.2);
-  border-top-color: #10b981;
+  border: 3px solid rgba(225, 90, 50, 0.2);
+  border-top-color: #E15A32;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -757,7 +757,7 @@ onUnmounted(() => {
 
 .qr-progress {
   height: 100%;
-  background: #10b981;
+  background: #E15A32;
   transition: width 1s linear;
 }
 

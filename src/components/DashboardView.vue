@@ -193,7 +193,7 @@
           <div v-for="session in sessions" :key="session.number_id" class="device-row">
             <div class="device-info">
               <div class="device-avatar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E15A32" stroke-width="2">
                   <rect x="5" y="2" width="14" height="20" rx="2"/>
                   <line x1="12" y1="18" x2="12.01" y2="18"/>
                 </svg>
@@ -460,7 +460,7 @@ const truncateUrl = (url: string) => {
   background: var(--bg-surface-elevated);
   padding: 0.15rem 0.35rem;
   border-radius: var(--radius-sm);
-  color: #34d399;
+  color: #FDB000;
 }
 
 .daemon-meta-bar {
@@ -509,18 +509,18 @@ const truncateUrl = (url: string) => {
   align-items: center;
   gap: 0.85rem;
   padding: 0.9rem 1.25rem;
-  background: #10b981;
+  background: #E15A32;
   color: #022c1b;
   border-radius: var(--radius-md);
   font-weight: 700;
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 25px rgba(225, 90, 50, 0.35);
 }
 .btn-primary-large:hover {
-  background: #059669;
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+  background: #C94A25;
+  box-shadow: 0 0 30px rgba(225, 90, 50, 0.5);
   transform: translateY(-1px);
 }
 
@@ -730,7 +730,7 @@ const truncateUrl = (url: string) => {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(225, 90, 50, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -766,7 +766,7 @@ const truncateUrl = (url: string) => {
   white-space: nowrap;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #60a5fa;
+  color: #FDB000;
   background: #1e293b;
   padding: 0.18rem 0.4rem;
   border-radius: 4px;
@@ -826,8 +826,8 @@ const truncateUrl = (url: string) => {
 }
 
 .arch-node.current {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+  border-color: #E15A32;
+  background: rgba(225, 90, 50, 0.1);
 }
 
 .arch-node-title {

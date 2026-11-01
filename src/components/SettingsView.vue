@@ -247,7 +247,7 @@ const save = () => {
   background: var(--bg-surface-elevated);
   padding: 0.1rem 0.3rem;
   border-radius: var(--radius-sm);
-  color: #34d399;
+  color: #FDB000;
 }
 
 .input-with-action {

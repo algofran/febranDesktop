@@ -309,8 +309,8 @@ const sendMessage = async () => {
 
 .toggle-btn.active {
   background: var(--bg-surface-elevated);
-  border-color: #10b981;
-  color: #34d399;
+  border-color: #E15A32;
+  color: #F2784F;
   font-weight: 600;
 }
 
