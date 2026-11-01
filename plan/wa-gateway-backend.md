@@ -1,104 +1,102 @@
-# WA Gateway Backend (febranDesktop)
+# WA Gateway Node (febranDesktop)
 
-Dedicated Go service that owns WhatsApp sessions (whatsmeow) for the main `febran` project.
+Desktop app + Go sidecar daemon yang menjalankan sesi WhatsApp (whatsmeow) untuk backend `febran`.
 
-**Not** a Tauri desktop app. **Not** a client-PC "Device ID Pairing" gateway. That framing (desktop sidecar, `window.__TAURI__`, local `127.0.0.1` token, SmartScreen signing) was for a different client ("kaffah") and is dropped.
-
-This repo is the **gateway transport layer** — a server-side daemon the `febran` API delegates WhatsApp send/receive/pairing to.
+- **Bukan** server-side daemon standalone, **bukan** klien pairing "Device ID" client-PC (framing lama "kaffah" — dibuang).
+- Bentuk nyata: **aplikasi Tauri desktop** (shell Vue) yang menjalankan **daemon Go** (`gateway`) sebagai sidecar. Daemon memegang sesi WhatsApp dan tersambung ke backend `febran` via **WebSocket** untuk menerima perintah dan melapor status.
 
 ---
 
-## 1. Why a separate service
-
-The main project `febran` (`D:\data\devapp\febran`) is a full-stack app: Nuxt 4 frontend + Go Fiber API + Postgres + RabbitMQ. It currently runs the whatsmeow `Manager` **inline** in `pkg/whatsapp/session.go`.
-
-Extracting the gateway into this repo gives:
-
-- **Independent scaling** — WhatsApp sessions are stateful (one long-lived socket per number); they shouldn't scale with the stateless API.
-- **Failure isolation** — a session crash / WhatsApp reconnect storm shouldn't take down the API.
-- **Deployment isolation** — gateway runs where WhatsApp won't flag datacenter IPs, API runs anywhere.
-
-## 2. Architecture
+## 1. Arsitektur
 
 ```mermaid
 flowchart LR
-    subgraph febran["febran (main project)"]
-        FE[Nuxt frontend]
+    subgraph febran["febran (backend)"]
         API[Go Fiber API]
+        HUB[WS Hub keyed by server_key+node_id]
         PG[(Postgres)]
-        FE --> API --> PG
+        API --- HUB
+        HUB --- PG
     end
 
-    subgraph febranDesktop["febranDesktop (this repo)"]
-        GW[Gateway service - Go + whatsmeow]
-        SQ[(SQLite per number)]
+    subgraph node["febranDesktop (node gateway)"]
+        SHELL[Tauri shell — Vue UI]
+        GW[Go daemon — whatsmeow]
+        SQ[(SQLite per nomor)]
+        SHELL -- HTTP local 127.0.0.1:8989 --> GW
         GW --- SQ
     end
 
     WA[WhatsApp]
-
-    API -- "command API: pair/send/groups" --> GW
-    GW -- "webhook: inbound/status/outbound" --> API
     GW <--> WA
+
+    HUB -- "perintah: pair/send/groups" --> GW
+    GW -- "event: inbound/status" --> API
+    SHELL -- "webhook passthrough" --> API
 ```
 
-- **Gateway → Central**: HTTP webhooks (`message.inbound`, `status.changed`, `message.sent`, `message.failed`).
-- **Central → Gateway**: HTTP command API (`pair`, `send`, `send-group`, `groups`, `logout`).
-- **Auth**: Gateway API Key, per tenant/number. Request/response over private network; WebSocket push is a later phase, not MVP.
+Peran tiap lapisan:
 
-## 3. Reuse (do not rewrite)
+| Lapisan | Teknologi | Peran |
+|---|---|---|
+| Shell | Tauri + Vue (tab: Dashboard, Sessions, Sandbox, Logs, Settings) | start/stop/restart daemon, baca status & log, simpan konfigurasi `.env` |
+| Daemon | Go (Fiber + whatsmeow) | pegang sesi WhatsApp, sediakan HTTP lokal, jembatan ke backend |
+| Backend | `febran` Go Fiber + Postgres | hub WS, routing perintah ke node, simpan pesan/status |
 
-Port `pkg/whatsapp/session.go` from `febran` as-is. It already provides:
+## 2. Fitur & status (diverifikasi terhadap kode)
 
-`StartPairing`, `GetQR`, `IsConnected`, `SendText`, `SendGroupText`, `ListGroups`, `GetGroupMembers`, `Stop`, `RecoverConnected`
+| Fitur | Didukung | Bukti |
+|---|---|---|
+| Tauri shell: start/stop/restart daemon | ✅ | `src-tauri/src/lib.rs` (start/stop gateway, status, log stream) |
+| Konfigurasi 8 env var via UI Settings | ✅ | `SettingsView.vue` → `save_config` → tulis `.env` + spawn ulang |
+| Sesi WhatsApp per nomor (SQLite, pure Go) | ✅ | `pkg/whatsapp`, driver `modernc.org/sqlite`, `<numberID>.db` |
+| Auto-reconnect sesi saat daemon boot | ✅ | `RecoverConnected()` di `cmd/gateway/main.go` |
+| Pairing QR | ✅ | `StartPairing` + `GetQR` (data-URL PNG) |
+| Pairing kode 8-digit | ✅ | `PairWithCode` via `pair_code` |
+| Kirim pesan teks | ✅ | `SendMessage` (strip `+`) |
+| Kirim pesan grup | ✅ | `SendGroupMessage` |
+| Daftar grup + anggota | ✅ | `ListGroups`, `GetGroupMembers` |
+| Logout / disconnect sesi | ✅ | `Stop` (hapus DB vs simpan) |
+| Daftar perintah WS dari backend | ✅ | `pair_qr`, `pair_code`, `send`, `send_group`, `list_groups`, `group_members_req`, `disconnect` |
+| Event WS ke backend | ✅ | `hello` (device report), `device_update` |
+| Webhook event ke backend | ✅ | `message.inbound`, `status.changed` |
+| Anti-duplikat server_key | ✅ | `node_id` persisten; backend tolak `server_key` yang dipakai node lain (close 4000) |
+| HTTP lokal (dipakai shell/tes) | ✅ | `/health`, `/api/v1/{sessions,pair,pair-qr,qr/:id,status/:id,send,send-group,groups/:id,logout/:id}` |
 
-Facts verified against `febran` code:
+## 3. Protokol
 
-| Item | Reality |
-|------|---------|
-| Session storage | One SQLite per number (`<numberID>.db`), driver `modernc.org/sqlite` (pure Go, no cgo) |
-| QR pairing | `whatsmeow.GetQRChannel`, QR encoded to data-URL PNG |
-| Inbound | `events.Message` handler extracts text/caption only; media is future work |
-| Reconnect | `RecoverConnected` scans session dir and re-connects saved sessions |
+### Node → Central (WebSocket)
+`GET {CENTRAL_WS_URL}?server_key=…&node_id=…&key=…` — register ke hub backend.
 
-## 4. Coupling points in `febran` that must change
+- **server_key** — identitas node di backend; wajib unik, match dengan `server_key` tersimpan di nomor (tenant).
+- **node_id** — identitas persisten mesin (`<session_dir>/node_id`, dibuat saat pertama jalan). Membedakan reconnect sah (node sama) dari node kedua yang memakai key sama.
+- Duplikat key dari node berbeda → backend tutup koneksi, kode close **4000**, node menampilkan log "server_key already in use by ANOTHER node".
 
-1. **Inbound ingestion** is a closure inline in `cmd/server/main.go:80-153` writing straight to Postgres. Extract to `service.IngestService` so both the in-process callback (legacy) and the gateway webhook handler share it.
-2. **`WANumber`** needs a `GatewayMode` field (`central` | `gateway`) + `GatewayLastSeenAt`.
-3. **`MessageService.Send`** must route `gateway`-mode numbers to the gateway command API instead of the local session.
-4. **Gateway API key auth** — entity `APIKey` + CRUD exist, but there's no middleware validating `X-Gateway-Key`. Add one.
-5. **Webhook receiver** — add `POST /api/v1/webhooks/gateway` in `febran`, calling `IngestService` + updating `WANumber.Status`.
-6. **`Manager.Stop`** deletes the session DB (re-pair from scratch). Add `Stop(keepSession bool)` so disconnect ≠ full re-pair.
+### Central → Node (perintah)
+Request/reply sinkron via ReqID: `pair_qr`, `pair_code`, `send`, `send_group`, `list_groups`, `group_members_req`, `disconnect`.
 
-## 5. Implementation phases
+### Node → Central (event)
+- Webhook HTTP: `message.inbound`, `status.changed`.
+- WS: `hello` (dilaporkan saat konek, berisi status semua sesi), `device_update` (perubahan pairing).
 
-### Phase 0 — `febran` prep (no behavior change)
-- [ ] Extract inbound ingestion → `service.IngestService`
-- [ ] Add `GatewayMode` + `GatewayLastSeenAt` to `WANumber` + auto-migrate
-- [ ] Add Gateway API-key middleware (`X-Gateway-Key` → tenant/number)
-- [ ] Add `Manager.Stop(keepSession bool)`
+## 4. Perintah lokal (Tauri shell → daemon)
 
-### Phase 1 — this repo (gateway service)
-- [ ] `go.mod` (module `github.com/algofran/febranDesktop`), port `pkg/whatsapp`
-- [ ] `cmd/gateway/main.go`: HTTP server, bind from `GATEWAY_BIND` (default `0.0.0.0:8989`), token auth
-- [ ] Endpoints: `POST /pair`, `GET /qr/:id`, `GET /status/:id`, `POST /send`, `POST /send-group`, `GET /groups/:id`, `POST /logout/:id`, `GET /health`
-- [ ] Webhook client → `CENTRAL_WEBHOOK_URL` + `X-Gateway-Key`; retry + backoff
-- [ ] Auto-reconnect via `RecoverConnected` on boot
-- [ ] `Dockerfile` + `.env.example`
+Dilindungi `GATEWAY_API_KEY` (header `X-Gateway-Key`). Dipakai shell untuk menampilkan status/sesi dan fitur Sandbox. Bukan API untuk backend — backend bicara lewat WS.
 
-### Phase 2 — `febran` wiring
-- [ ] `MessageService.Send` routes `gateway` numbers → gateway API
-- [ ] `NumbersView.vue` QR flow branches to gateway for `gateway`-mode numbers
-- [ ] Status + inbound refresh from webhook + short poll
+## 5. Non-goal (dibuang / deferred)
 
-### Phase 3 — verify
-- [ ] Pair a number through the gateway, scan QR, status `connected` in `febran`
-- [ ] Send/receive end-to-end; message recorded in Postgres via webhook
-- [ ] Gateway restart → `RecoverConnected` without re-scan
+| Item | Status |
+|---|---|
+| Framing "client-PC Device ID pairing" (kaffah) | Dibuang |
+| HTTP command API central → node | Dibuang — diganti WS hub |
+| Daemon sebagai container Docker | Non-goal — distribusi adalah desktop sidecar (`src-tauri/binaries/`) |
+| Media messages (kirim/terima) | Deferred |
+| Real-time SSE/WS ke frontend web `febran` | Deferred |
+| Sharding multi-node / horizontal session fan-out | Deferred |
 
-## 6. Deferred (out of MVP)
+## 6. Roadmap
 
-- WebSocket push central → gateway (auto-reply/broadcast)
-- Media messages (send/receive)
-- SSE/WS real-time to frontend
-- Multi-tenant gateway sharding / horizontal session fan-out
+- [ ] Auto-daftar node ke backend (`POST /gateway-nodes` dengan `server_key` + nama) — saat ini `server_key` diinput manual di Settings dan harus cocok dengan yang didaftarkan di backend.
+- [ ] Heartbeat / `GatewayLastSeenAt` agar backend tahu node offline.
+- [ ] Webhook retry + backoff eksplisit.
+- [ ] Media messages (fase lanjut).
