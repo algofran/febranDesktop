@@ -59,20 +59,6 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">{{ t('settings.webhookUrlLabel') }} (CENTRAL_WEBHOOK_URL)</label>
-              <input v-model="form.central_webhook_url" type="text" class="font-mono" />
-              <span class="form-hint">{{ t('settings.webhookUrlHint') }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">{{ t('settings.wsUrlLabel') }} (CENTRAL_WS_URL)</label>
-              <input v-model="form.central_ws_url" type="text" class="font-mono" />
-              <span class="form-hint">{{ t('settings.wsUrlHint') }}</span>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
               <label class="form-label">{{ t('settings.serverKeyLabel') }} (GATEWAY_SERVER_KEY)</label>
               <div class="input-with-action">
                 <input v-model="form.gateway_server_key" type="text" class="font-mono" />

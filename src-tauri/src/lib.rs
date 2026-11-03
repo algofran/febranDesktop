@@ -158,8 +158,6 @@ fn load_env_config() -> GatewayConfig {
                 match key {
                     "GATEWAY_BIND" => config.gateway_bind = val.to_string(),
                     "GATEWAY_API_KEY" => config.gateway_api_key = val.to_string(),
-                    "CENTRAL_WEBHOOK_URL" => config.central_webhook_url = val.to_string(),
-                    "CENTRAL_WS_URL" => config.central_ws_url = val.to_string(),
                     "GATEWAY_SERVER_KEY" => config.gateway_server_key = val.to_string(),
                     "CENTRAL_API_KEY" => config.central_api_key = val.to_string(),
                     "SESSION_DIR" => config.session_dir = val.to_string(),
@@ -169,7 +167,14 @@ fn load_env_config() -> GatewayConfig {
             }
         }
     }
+    pin_central_urls(&mut config);
     config
+}
+
+/// The central endpoints are fixed in the build; whatever a .env or the UI says is ignored.
+fn pin_central_urls(config: &mut GatewayConfig) {
+    config.central_webhook_url = CENTRAL_WEBHOOK_URL.to_string();
+    config.central_ws_url = CENTRAL_WS_URL.to_string();
 }
 
 /// A value with a line break would inject extra KEY=VALUE lines into the .env.
@@ -499,7 +504,8 @@ fn get_config(state: State<AppState>) -> GatewayConfig {
 }
 
 #[tauri::command]
-fn save_config(config: GatewayConfig, state: State<AppState>) -> Result<bool, String> {
+fn save_config(mut config: GatewayConfig, state: State<AppState>) -> Result<bool, String> {
+    pin_central_urls(&mut config);
     save_env_config(&config)?;
     let mut current_cfg = state.config.lock().unwrap();
     *current_cfg = config;
