@@ -1,0 +1,31 @@
+{
+  "name": "febran-desktop",
+  "version": "1.0.4",
+  "description": "Febran WA Gateway Desktop Application & Node Server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:sidecar": "powershell -ExecutionPolicy Bypass -File ./scripts/build-sidecar.ps1",
+    "tauri": "tauri",
+    "tauri:dev": "npm run build:sidecar && tauri dev",
+    "dev:tauri": "npm run tauri:dev",
+    "tauri:build": "npm run build:sidecar && tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-http": "^2.2.0",
+    "@tauri-apps/plugin-process": "^2.2.0",
+    "@tauri-apps/plugin-shell": "^2.2.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vue-tsc": "^2.2.0"
+  }
+}

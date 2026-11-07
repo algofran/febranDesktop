@@ -9,3 +9,30 @@ desktop.ini
 
 # Log files
 *.log
+
+# Go build output (root only: a bare "gateway" also matched cmd/gateway/ and internal/gateway/)
+/gateway
+/gateway.exe
+*.exe~
+
+# Environment
+.env
+
+# Session data
+sessions/
+*.db
+
+# Frontend / Tauri build output
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/binaries/
+src-tauri/gen/schemas/
+
+# Tool artifacts
+.history/
+.playwright-mcp/
+.waylog/
+
+# Central server API key baked into release builds (see src-tauri/build.rs)
+src-tauri/central-key.txt

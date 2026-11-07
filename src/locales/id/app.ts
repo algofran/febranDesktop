@@ -1,0 +1,21 @@
+export default {
+  toast: {
+    started: 'Proses gateway berhasil dimulai',
+    startFailed: 'Gagal memulai gateway: {err}',
+    stopped: 'Proses gateway dihentikan',
+    stopFailed: 'Gagal menghentikan: {err}',
+    restarting: 'Memulai ulang Go daemon...',
+    restarted: 'Gateway berhasil dimulai ulang',
+    restartStartFailed: 'Gagal memulai: {err}',
+    restartError: 'Gagal memulai ulang: {err}',
+    loggedOut: 'Sesi untuk {id} telah logout',
+    error: 'Kesalahan: {err}',
+    syncAllStart: 'Menarik & menyinkronkan semua data kontak dan grup...',
+    syncAllDone: 'Berhasil sinkronkan {contacts} kontak dan {groups} grup dari {sessions} nomor',
+    syncFailed: 'Sinkronisasi gagal: {err}',
+    syncDeviceStart: 'Menyinkronkan kontak dan grup untuk {id}...',
+    syncDeviceDone: 'Berhasil sinkronkan {contacts} kontak & {groups} grup untuk {id}',
+    configSaved: 'Konfigurasi berhasil disimpan',
+    configSaveFailed: 'Gagal menyimpan konfigurasi: {err}',
+  },
+}

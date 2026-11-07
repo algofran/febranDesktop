@@ -1,0 +1,21 @@
+export default {
+  toast: {
+    started: 'Gateway process started successfully',
+    startFailed: 'Failed to start gateway: {err}',
+    stopped: 'Gateway process stopped',
+    stopFailed: 'Failed to stop: {err}',
+    restarting: 'Restarting Go daemon...',
+    restarted: 'Gateway restarted successfully',
+    restartStartFailed: 'Failed to start: {err}',
+    restartError: 'Restart error: {err}',
+    loggedOut: 'Logged out session for {id}',
+    error: 'Error: {err}',
+    syncAllStart: 'Pulling & syncing all contact and group data...',
+    syncAllDone: 'Successfully synced {contacts} contacts and {groups} groups from {sessions} numbers',
+    syncFailed: 'Sync failed: {err}',
+    syncDeviceStart: 'Syncing contacts and groups for {id}...',
+    syncDeviceDone: 'Successfully synced {contacts} contacts & {groups} groups for {id}',
+    configSaved: 'Configuration saved successfully',
+    configSaveFailed: 'Failed to save config: {err}',
+  },
+}
