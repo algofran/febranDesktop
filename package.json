@@ -1,6 +1,6 @@
 {
   "name": "febran-desktop",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Febran WA Gateway Desktop Application & Node Server",
   "private": true,
   "type": "module",
