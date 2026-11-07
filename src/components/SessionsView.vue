@@ -52,7 +52,6 @@
               </div>
               <div>
                 <div class="session-phone font-mono">{{ s.number_id }}</div>
-                <div class="session-db">{{ t('sessions.file', { name: s.number_id + '.db' }) }}</div>
 
                 <div v-if="s.pairing_key" class="pairing-key-row">
                   <span class="pairing-key-label">{{ t('sessions.pairingKey') }}</span>
@@ -559,9 +558,11 @@ onUnmounted(() => {
 }
 
 .session-card {
-  display: flex;
+  /* number and pairing key on top, status on the left and actions on the right underneath */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem 1rem;
   padding: 0.85rem 1rem;
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -575,12 +576,27 @@ onUnmounted(() => {
 }
 
 .session-main {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+}
+
+.session-status {
+  grid-column: 1;
+}
+
+.session-controls {
+  grid-column: 2;
+}
+
+.session-controls .btn-sm {
+  white-space: nowrap;
 }
 
 .session-icon-box {
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);

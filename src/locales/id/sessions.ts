@@ -8,7 +8,6 @@ export default {
   emptyTitle: 'Belum ada sesi terdaftar',
   emptyDesc: 'Klik "Tambah nomor" untuk memindai kode QR dengan aplikasi WhatsApp di ponsel Anda.',
   startQrPairing: 'Mulai pairing QR',
-  file: 'File: {name}',
   pairingKey: 'Kode pairing:',
   copyPairingKey: 'Salin kode pairing',
   pairingKeyHelper: 'Gunakan kode ini saat mendaftarkan nomor di Web Panel Tenant.',

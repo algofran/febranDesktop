@@ -8,7 +8,6 @@ export default {
   emptyTitle: 'No sessions registered',
   emptyDesc: 'Click "Add Number" to scan a QR code with your WhatsApp mobile app.',
   startQrPairing: 'Start QR Pairing',
-  file: 'File: {name}',
   pairingKey: 'Pairing Key:',
   copyPairingKey: 'Copy Pairing Key',
   pairingKeyHelper: 'Use this code when registering the number in the Tenant Web Panel.',
