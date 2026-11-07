@@ -74,6 +74,24 @@ type Client struct {
 	conn      *websocket.Conn
 	writeMu   sync.Mutex
 	connected atomic.Bool
+
+	// registration is the backend's answer per number: whether it was filed under the account.
+	registration sync.Map // number id -> Registration
+}
+
+// Registration is what the backend said about a number this node reported.
+type Registration struct {
+	Status  string // registered, limit, owned_elsewhere, removed, failed
+	Message string
+}
+
+// Registration returns the backend's latest answer for a number, if it gave one.
+func (c *Client) Registration(numberID string) (Registration, bool) {
+	v, ok := c.registration.Load(numberID)
+	if !ok {
+		return Registration{}, false
+	}
+	return v.(Registration), true
 }
 
 // closeCodeKeyTaken mirrors the backend's 4000 reject reason sent when a
@@ -185,6 +203,8 @@ func (c *Client) write(m Message) {
 
 func (c *Client) handle(m Message) {
 	switch m.Type {
+	case "registration":
+		c.registration.Store(m.NumberID, Registration{Status: m.Code, Message: m.Error})
 	case "pair_qr":
 		c.pairQR(m)
 	case "pair_code":

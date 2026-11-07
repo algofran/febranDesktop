@@ -32,5 +32,11 @@ export default {
     sync: 'Sync',
     scanQr: 'Scan QR',
     logout: 'Logout',
+    reg: {
+      limit: 'Not added to your Febran account: your plan\'s number limit is reached, so messages will not be sent. Upgrade your plan or remove another number.',
+      owned_elsewhere: 'Not added: this number already belongs to another Febran account.',
+      removed: 'Not added: this number was removed from your Febran account. Add it again from the panel (WA Numbers).',
+      failed: 'Could not be added to your Febran account. Try again later.',
+    },
   },
 }

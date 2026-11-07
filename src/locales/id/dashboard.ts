@@ -32,5 +32,11 @@ export default {
     sync: 'Sinkronkan',
     scanQr: 'Pindai QR',
     logout: 'Logout',
+    reg: {
+      limit: 'Belum ditambahkan ke akun Febran: batas nomor paket Anda tercapai, jadi pesan tidak akan terkirim. Upgrade paket atau hapus nomor lain.',
+      owned_elsewhere: 'Tidak ditambahkan: nomor ini sudah terdaftar di akun Febran lain.',
+      removed: 'Tidak ditambahkan: nomor ini pernah dihapus dari akun Febran. Tambahkan lagi dari panel (WA Numbers).',
+      failed: 'Belum bisa ditambahkan ke akun Febran. Coba lagi nanti.',
+    },
   },
 }

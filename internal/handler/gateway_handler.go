@@ -68,7 +68,15 @@ func (h *GatewayHandler) GetQR(c *fiber.Ctx) error {
 }
 
 func (h *GatewayHandler) ListSessions(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"sessions": h.manager.ListSessions()})
+	sessions := h.manager.ListSessions()
+	if h.wsClient != nil {
+		for i := range sessions {
+			if r, ok := h.wsClient.Registration(sessions[i].NumberID); ok {
+				sessions[i].Registration, sessions[i].RegistrationMessage = r.Status, r.Message
+			}
+		}
+	}
+	return c.JSON(fiber.Map{"sessions": sessions})
 }
 
 func (h *GatewayHandler) GetStatus(c *fiber.Ctx) error {

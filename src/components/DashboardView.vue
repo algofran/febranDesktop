@@ -58,6 +58,7 @@
               <span class="number-id font-mono">{{ session.number_id }}</span>
               <span class="number-state">{{ session.connected ? t('dashboard.devices.connected') : t('dashboard.devices.disconnected') }}</span>
             </div>
+            <span v-if="session.registration && session.registration !== 'registered'" class="reg-warning">{{ t('dashboard.devices.reg.' + session.registration) }}</span>
             <span v-if="session.pairing_key" class="pairing">
               <span class="pairing-label">{{ t('dashboard.devices.pairingKey') }}</span>
               <code class="pairing-code">{{ session.pairing_key }}</code>
@@ -332,6 +333,13 @@ const totalSessionsCount = computed(() => {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.reg-warning {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f59e0b;
 }
 
 .number-state {

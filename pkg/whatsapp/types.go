@@ -57,4 +57,7 @@ type SessionInfo struct {
 	HasFile    bool   `json:"has_file"`
 	Paired     bool   `json:"paired"`
 	PairingKey string `json:"pairing_key,omitempty"`
+	// Registration is the central backend's answer: registered, limit, owned_elsewhere, removed or failed.
+	Registration        string `json:"registration,omitempty"`
+	RegistrationMessage string `json:"registration_message,omitempty"`
 }

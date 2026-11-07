@@ -64,6 +64,8 @@ export interface SessionInfo {
   qr_code?: string;
   pairing_code?: string;
   pairing_key?: string;
+  /** central backend answer: registered | limit | owned_elsewhere | removed | failed */
+  registration?: string;
   last_activity?: string;
 }
 
