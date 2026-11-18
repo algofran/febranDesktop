@@ -293,8 +293,12 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 			} else if v.Message.GetExtendedTextMessage() != nil {
 				text = v.Message.GetExtendedTextMessage().GetText()
 			}
+			media, mediaName, caption := inboundMedia(v.Message)
+			if text == "" {
+				text = caption
+			}
 
-			if text != "" {
+			if text != "" || media != nil {
 				// WhatsApp may address people by an anonymous LID instead of their phone number.
 				// Report phone-number JIDs so contacts and replies line up with real numbers.
 				var client *whatsmeow.Client
@@ -305,7 +309,7 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 				if v.Info.IsFromMe {
 					chatAlt = v.Info.RecipientAlt
 				}
-				m.OnMessage(InboundMessage{
+				msg := InboundMessage{
 					NumberID:   numberID,
 					SenderJID:  resolvePN(client, v.Info.Sender, v.Info.SenderAlt).ToNonAD().String(),
 					SenderName: v.Info.PushName,
@@ -315,7 +319,26 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 					IsGroup:    isGroup,
 					IsFromMe:   v.Info.IsFromMe,
 					MessageID:  v.Info.ID,
-				})
+					MediaName:  mediaName,
+				}
+				if media == nil {
+					m.OnMessage(msg)
+				} else {
+					// downloading can take a while; do not hold up the event loop
+					go func() {
+						if client != nil && media.GetFileLength() <= maxInboundMedia {
+							data, err := client.Download(context.Background(), media)
+							if err != nil {
+								log.Printf("[%s] download media of %s: %v", numberID, v.Info.ID, err)
+							}
+							msg.Media = data
+						}
+						if msg.Media == nil && msg.Text == "" {
+							msg.Text = "[Lampiran tidak dapat diunduh]"
+						}
+						m.OnMessage(msg)
+					}()
+				}
 			}
 		}
 	case *events.PairSuccess:

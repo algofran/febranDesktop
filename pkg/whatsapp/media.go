@@ -35,6 +35,36 @@ func recipientJID(to string, group bool) (types.JID, error) {
 	return jid, nil
 }
 
+// maxInboundMedia caps attachments forwarded to the backend (sent base64 in JSON, so a 16 MB file
+// is ~22 MB on the wire, under the backend's 52 MB body limit).
+const maxInboundMedia = 16 << 20
+
+// mediaMessage is what whatsmeow needs to download an attachment and how big it is.
+type mediaMessage interface {
+	whatsmeow.DownloadableMessage
+	GetFileLength() uint64
+}
+
+// inboundMedia picks the attachment of a received message, if any, with its document file name
+// and caption. Stickers and other kinds are ignored.
+func inboundMedia(msg *waE2E.Message) (mediaMessage, string, string) {
+	switch {
+	case msg.GetImageMessage() != nil:
+		return msg.GetImageMessage(), "", msg.GetImageMessage().GetCaption()
+	case msg.GetVideoMessage() != nil:
+		return msg.GetVideoMessage(), "", msg.GetVideoMessage().GetCaption()
+	case msg.GetAudioMessage() != nil:
+		return msg.GetAudioMessage(), "", ""
+	case msg.GetDocumentMessage() != nil:
+		d := msg.GetDocumentMessage()
+		return d, d.GetFileName(), d.GetCaption()
+	case msg.GetDocumentWithCaptionMessage().GetMessage().GetDocumentMessage() != nil:
+		d := msg.GetDocumentWithCaptionMessage().GetMessage().GetDocumentMessage()
+		return d, d.GetFileName(), d.GetCaption()
+	}
+	return nil, "", ""
+}
+
 // SendMedia uploads data to WhatsApp and sends it as an image, video or
 // document (chosen from the sniffed content type). caption may be empty.
 func (m *Manager) SendMedia(numberID, to string, group bool, data []byte, fileName, caption string) error {
