@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/algofran/febranDesktop/internal/config"
 	"github.com/algofran/febranDesktop/internal/gateway"
@@ -88,6 +89,18 @@ func serve(ctx context.Context) error {
 
 	// Recover existing sessions on boot
 	mgr.RecoverConnected()
+
+	// Received attachments are kept 7 days for download from the panel, then deleted.
+	go func() {
+		for {
+			mgr.CleanupMedia()
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Hour):
+			}
+		}
+	}()
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{

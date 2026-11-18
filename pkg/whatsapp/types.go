@@ -42,10 +42,12 @@ type InboundMessage struct {
 	// then the owner, and ChatJID is the person or group it was sent to.
 	IsFromMe  bool
 	MessageID string
-	// Media is an attached image, video, document or voice note (encoded as base64 in JSON).
-	// MediaName is the document's file name. Empty when the message is text only.
-	Media     []byte `json:",omitempty"`
+	// An attachment is kept on this computer (see SaveInboundMedia) and only described here; the
+	// backend asks for the file with fetch_media when a user clicks Download.
+	MediaKind string `json:",omitempty"` // image, video, audio, document
+	MediaRef  string `json:",omitempty"`
 	MediaName string `json:",omitempty"`
+	MediaSize int64  `json:",omitempty"`
 }
 
 type StatusChange struct {

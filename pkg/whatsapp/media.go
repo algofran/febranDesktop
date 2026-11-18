@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -45,24 +48,85 @@ type mediaMessage interface {
 	GetFileLength() uint64
 }
 
-// inboundMedia picks the attachment of a received message, if any, with its document file name
-// and caption. Stickers and other kinds are ignored.
-func inboundMedia(msg *waE2E.Message) (mediaMessage, string, string) {
+// inboundMedia picks the attachment of a received message, if any, with its kind, document file
+// name and caption. Stickers and other kinds are ignored.
+func inboundMedia(msg *waE2E.Message) (mediaMessage, string, string, string) {
 	switch {
 	case msg.GetImageMessage() != nil:
-		return msg.GetImageMessage(), "", msg.GetImageMessage().GetCaption()
+		return msg.GetImageMessage(), "image", "", msg.GetImageMessage().GetCaption()
 	case msg.GetVideoMessage() != nil:
-		return msg.GetVideoMessage(), "", msg.GetVideoMessage().GetCaption()
+		return msg.GetVideoMessage(), "video", "", msg.GetVideoMessage().GetCaption()
 	case msg.GetAudioMessage() != nil:
-		return msg.GetAudioMessage(), "", ""
+		return msg.GetAudioMessage(), "audio", "", ""
 	case msg.GetDocumentMessage() != nil:
 		d := msg.GetDocumentMessage()
-		return d, d.GetFileName(), d.GetCaption()
+		return d, "document", d.GetFileName(), d.GetCaption()
 	case msg.GetDocumentWithCaptionMessage().GetMessage().GetDocumentMessage() != nil:
 		d := msg.GetDocumentWithCaptionMessage().GetMessage().GetDocumentMessage()
-		return d, d.GetFileName(), d.GetCaption()
+		return d, "document", d.GetFileName(), d.GetCaption()
 	}
-	return nil, "", ""
+	return nil, "", "", ""
+}
+
+// MediaRetention is how long received attachments stay on this computer (and downloadable).
+const MediaRetention = 7 * 24 * time.Hour
+
+func (m *Manager) mediaDir() string { return filepath.Join(m.SessionDir, "media") }
+
+// mediaFile is where an attachment is kept; both parts are reduced to letters and digits so a
+// reference coming back from the backend can never point outside the media folder.
+func (m *Manager) mediaFile(numberID, ref string) (string, error) {
+	keep := func(s string) string {
+		return strings.Map(func(r rune) rune {
+			if (r >= '0' && r <= '9') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				return r
+			}
+			return -1
+		}, s)
+	}
+	n, r := keep(numberID), keep(ref)
+	if n == "" || r == "" {
+		return "", fmt.Errorf("invalid media reference")
+	}
+	return filepath.Join(m.mediaDir(), n+"_"+r), nil
+}
+
+// SaveInboundMedia keeps a received attachment and returns the reference the backend uses to ask for it.
+func (m *Manager) SaveInboundMedia(numberID, messageID string, data []byte) (string, error) {
+	p, err := m.mediaFile(numberID, messageID)
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(m.mediaDir(), 0o700); err != nil {
+		return "", err
+	}
+	if err := os.WriteFile(p, data, 0o600); err != nil {
+		return "", err
+	}
+	base := filepath.Base(p) // "<number>_<ref>"
+	return base[strings.IndexByte(base, '_')+1:], nil
+}
+
+// InboundMedia returns a kept attachment; gone once older than MediaRetention.
+func (m *Manager) InboundMedia(numberID, ref string) ([]byte, error) {
+	p, err := m.mediaFile(numberID, ref)
+	if err != nil {
+		return nil, err
+	}
+	if st, err := os.Stat(p); err != nil || time.Since(st.ModTime()) > MediaRetention {
+		return nil, fmt.Errorf("media no longer available")
+	}
+	return os.ReadFile(p)
+}
+
+// CleanupMedia deletes attachments older than MediaRetention.
+func (m *Manager) CleanupMedia() {
+	entries, _ := os.ReadDir(m.mediaDir())
+	for _, e := range entries {
+		if info, err := e.Info(); err == nil && time.Since(info.ModTime()) > MediaRetention {
+			_ = os.Remove(filepath.Join(m.mediaDir(), e.Name()))
+		}
+	}
 }
 
 // SendMedia uploads data to WhatsApp and sends it as an image, video or

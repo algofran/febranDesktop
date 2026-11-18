@@ -41,6 +41,8 @@ type Message struct {
 	Groups    []Group   `json:"groups,omitempty"`
 	Members   []string  `json:"members,omitempty"`
 	Contacts  []Contact `json:"contacts,omitempty"`
+	// Media carries a kept attachment back to the backend (fetch_media reply); base64 in JSON.
+	Media []byte `json:"media,omitempty"`
 }
 
 type Device struct {
@@ -211,6 +213,13 @@ func (c *Client) handle(m Message) {
 		c.pairCode(m)
 	case "send":
 		c.doSend(m)
+	case "fetch_media":
+		data, err := c.mgr.InboundMedia(m.NumberID, m.Code)
+		if err != nil {
+			c.write(Message{Type: "media", ReqID: m.ReqID, NumberID: m.NumberID, OK: false, Error: err.Error()})
+			return
+		}
+		c.write(Message{Type: "media", ReqID: m.ReqID, NumberID: m.NumberID, OK: true, Media: data})
 	case "send_group":
 		c.doSendGroup(m)
 	case "list_groups":

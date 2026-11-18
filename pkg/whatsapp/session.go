@@ -293,7 +293,7 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 			} else if v.Message.GetExtendedTextMessage() != nil {
 				text = v.Message.GetExtendedTextMessage().GetText()
 			}
-			media, mediaName, caption := inboundMedia(v.Message)
+			media, mediaKind, mediaName, caption := inboundMedia(v.Message)
 			if text == "" {
 				text = caption
 			}
@@ -328,12 +328,16 @@ func (m *Manager) handleEvent(numberID string, evt interface{}) {
 					go func() {
 						if client != nil && media.GetFileLength() <= maxInboundMedia {
 							data, err := client.Download(context.Background(), media)
-							if err != nil {
-								log.Printf("[%s] download media of %s: %v", numberID, v.Info.ID, err)
+							if err == nil {
+								msg.MediaRef, err = m.SaveInboundMedia(numberID, v.Info.ID, data)
 							}
-							msg.Media = data
+							if err != nil {
+								log.Printf("[%s] keep media of %s: %v", numberID, v.Info.ID, err)
+							} else {
+								msg.MediaKind, msg.MediaSize = mediaKind, int64(len(data))
+							}
 						}
-						if msg.Media == nil && msg.Text == "" {
+						if msg.MediaRef == "" && msg.Text == "" {
 							msg.Text = "[Lampiran tidak dapat diunduh]"
 						}
 						m.OnMessage(msg)
